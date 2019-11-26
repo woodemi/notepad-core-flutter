@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - notepad_core (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `.symlinks/flutter/ios-release`)
+  - notepad_core (from `.symlinks/plugins/notepad_core/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: ".symlinks/flutter/ios-release"
+  notepad_core:
+    :path: ".symlinks/plugins/notepad_core/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  notepad_core: 1092b3fc4e2feb8cfb5fb1211141fe215cb4eb0f
+
+PODFILE CHECKSUM: 7fb83752f59ead6285236625b82473f90b1cb932
+
+COCOAPODS: 1.7.1
