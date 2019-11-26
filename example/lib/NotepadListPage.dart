@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:notepad_core/notepad_core.dart' as NotepadCore;
 
 class NotepadListPage extends StatelessWidget {
   @override
@@ -7,8 +9,22 @@ class NotepadListPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('NotepadListPage'),
       ),
-      body: Center(
-        child: Text('TODO'),
+      body: Column(
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('startScan'),
+                onPressed: () => NotepadCore.startScan(),
+              ),
+              RaisedButton(
+                child: Text('stopScan'),
+                onPressed: () => NotepadCore.stopScan(),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
