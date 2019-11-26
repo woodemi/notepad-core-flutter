@@ -1,4 +1,4 @@
-group 'com.example.notepad_core'
+group 'io.woodemi.NotepadCore'
 version '1.0-SNAPSHOT'
 
 buildscript {

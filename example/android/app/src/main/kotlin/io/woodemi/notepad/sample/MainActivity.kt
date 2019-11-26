@@ -1,4 +1,4 @@
-package com.example.notepad_core_example
+package io.woodemi.notepad.sample
 
 import android.os.Bundle
 
