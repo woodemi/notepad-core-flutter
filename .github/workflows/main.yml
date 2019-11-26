@@ -1,0 +1,26 @@
+name: Main
+
+on: push
+
+jobs:
+  build-android:
+    name: Build Android on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: subosito/flutter-action@v1
+      - run: cd example; flutter build apk
+
+  build-ios:
+    name: Build iOS on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: subosito/flutter-action@v1
+      - run: cd example && flutter build ios --no-codesign
