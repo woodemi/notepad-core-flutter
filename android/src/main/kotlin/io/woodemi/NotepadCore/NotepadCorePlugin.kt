@@ -1,25 +1,96 @@
 package io.woodemi.NotepadCore
 
+import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
+import android.content.Context
+import android.util.Log
+import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.EventChannel.EventSink
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-class NotepadCorePlugin : MethodCallHandler {
+private const val TAG = "NotepadCorePlugin"
+
+class NotepadCorePlugin(context: Context) : MethodCallHandler, EventChannel.StreamHandler {
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
-            val channel = MethodChannel(registrar.messenger(), "notepad_core")
-            channel.setMethodCallHandler(NotepadCorePlugin())
+            val notepadCorePlugin = NotepadCorePlugin(registrar.context())
+            MethodChannel(registrar.messenger(), "notepad_core/method").setMethodCallHandler(notepadCorePlugin)
+            EventChannel(registrar.messenger(), "notepad_core/event.scanResult").setStreamHandler(notepadCorePlugin)
         }
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
-        if (call.method == "getPlatformVersion") {
-            result.success("Android ${android.os.Build.VERSION.RELEASE}")
-        } else {
-            result.notImplemented()
+        Log.d(TAG, "onMethodCall " + call.method)
+        when (call.method) {
+            "startScan" -> {
+                scanner.startScan(scanCallback)
+                result.success(null)
+            }
+            "stopScan" -> {
+                scanner.stopScan(scanCallback)
+                result.success(null)
+            }
+            else -> result.notImplemented()
+        }
+    }
+
+    val scanner by lazy {
+        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothManager.adapter.bluetoothLeScanner
+    }
+
+    val scanCallback = object : ScanCallback() {
+        override fun onScanFailed(errorCode: Int) {
+            Log.v(TAG, "onScanFailed: $errorCode")
+        }
+
+        override fun onScanResult(callbackType: Int, result: ScanResult) {
+            Log.v(TAG, "onScanResult: $callbackType + $result")
+            scanResultSink?.success(mapOf<String, Any>(
+                    "name" to (result.device.name ?: ""),
+                    "deviceId" to result.device.address,
+                    "manufacturerData" to (result.manufacturerData ?: byteArrayOf()),
+                    "rssi" to result.rssi
+            ))
+        }
+
+        override fun onBatchScanResults(results: MutableList<ScanResult>?) {
+            Log.v(TAG, "onBatchScanResults: $results")
+        }
+    }
+
+    private var scanResultSink: EventSink? = null
+
+    override fun onListen(args: Any?, eventSink: EventSink?) {
+        val map = args as? Map<String, Any> ?: return
+        when (map["name"]) {
+            "scanResult" -> scanResultSink = eventSink
+        }
+    }
+
+    override fun onCancel(args: Any?) {
+        val map = args as? Map<String, Any> ?: return
+        when (map["name"]) {
+            "scanResult" -> scanResultSink = null
         }
     }
 }
+
+val ScanResult.manufacturerData: ByteArray?
+    get() {
+        val sparseArray = scanRecord?.manufacturerSpecificData ?: return null
+        if (sparseArray.size() == 0) return null
+
+        return sparseArray.keyAt(0).toShort().toByteArray() + sparseArray.valueAt(0)
+    }
+
+fun Short.toByteArray(byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN): ByteArray =
+        ByteBuffer.allocate(2 /*Short.SIZE_BYTES*/).order(byteOrder).putShort(this).array()

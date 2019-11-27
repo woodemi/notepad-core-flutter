@@ -1,13 +1,26 @@
-import 'dart:async';
-
 import 'package:flutter/services.dart';
 
-class NotepadCore {
-  static const MethodChannel _channel =
-      const MethodChannel('notepad_core');
+import 'Common.dart';
+import 'Notepad.dart';
 
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
+export 'Notepad.dart';
+
+const _method = const MethodChannel('notepad_core/method');
+const _event_scanResult = const EventChannel('notepad_core/event.scanResult');
+
+void startScan() {
+  _method
+      .invokeMethod('startScan')
+      .then((_) => print('startScan invokeMethod success'));
 }
+
+void stopScan() {
+  _method
+      .invokeMethod('stopScan')
+      .then((_) => print('stopScan invokeMethod success'));
+}
+
+final Stream<NotepadScanResult> scanResultStream = _event_scanResult
+    .receiveBroadcastStream({'name': 'scanResult'})
+    .map((item) => NotepadScanResult.fromMap(item))
+    .where(support);
