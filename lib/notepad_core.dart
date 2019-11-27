@@ -24,3 +24,14 @@ final Stream<NotepadScanResult> scanResultStream = _event_scanResult
     .receiveBroadcastStream({'name': 'scanResult'})
     .map((item) => NotepadScanResult.fromMap(item))
     .where(support);
+
+void connect(NotepadScanResult scanResult) {
+  _method.invokeMethod('connect', {
+    'deviceId': scanResult.deviceId,
+  }).then((_) => print('connect invokeMethod success'));
+}
+
+void disconnect() {
+  _method.invokeMethod('disconnect')
+      .then((_) => print('disconnect invokeMethod success'));
+}
