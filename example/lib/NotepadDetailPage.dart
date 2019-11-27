@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:notepad_core/notepad_core.dart' as NotepadCore;
+import 'package:notepad_core/notepad_core.dart';
 
 class NotepadDetailPage extends StatefulWidget {
-  final NotepadCore.NotepadScanResult scanResult;
+  final NotepadScanResult scanResult;
 
   NotepadDetailPage(this.scanResult);
 
@@ -24,13 +24,13 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> {
               RaisedButton(
                 child: Text('connect'),
                 onPressed: () {
-                  NotepadCore.connect(widget.scanResult);
+                  notepadConnector.connect(widget.scanResult);
                 },
               ),
               RaisedButton(
                 child: Text('disconnect'),
                 onPressed: () {
-                  NotepadCore.disconnect();
+                  notepadConnector.disconnect();
                 },
               ),
             ],

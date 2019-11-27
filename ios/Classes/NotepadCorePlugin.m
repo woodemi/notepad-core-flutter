@@ -6,22 +6,26 @@
 @property(nonatomic, strong) NSMutableDictionary<NSString *, CBPeripheral *> *discoveredPeripherals;
 @property(nonatomic, strong) CBPeripheral *peripheral;
 
+@property(nonatomic, strong) FlutterBasicMessageChannel *messageChannel;
 @property(nonatomic, strong) FlutterEventSink scanResultSink;
 
 @end
 
 @implementation NotepadCorePlugin
 + (void)registerWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar {
-    NotepadCorePlugin *notepadCorePlugin = [[NotepadCorePlugin alloc] init];
+    FlutterBasicMessageChannel *messageChannel = [FlutterBasicMessageChannel messageChannelWithName:@"notepad_core/message" binaryMessenger:[registrar messenger]];
+    NotepadCorePlugin *notepadCorePlugin = [[NotepadCorePlugin alloc] initWithMessageChannel:messageChannel];
+
     FlutterMethodChannel *methodChannel = [FlutterMethodChannel methodChannelWithName:@"notepad_core/method" binaryMessenger:[registrar messenger]];
     [registrar addMethodCallDelegate:notepadCorePlugin channel:methodChannel];
     [[FlutterEventChannel eventChannelWithName:@"notepad_core/event.scanResult" binaryMessenger:[registrar messenger]] setStreamHandler:notepadCorePlugin];
 }
 
-- (instancetype)init {
+- (instancetype)initWithMessageChannel:(FlutterBasicMessageChannel *)messageChannel {
     if (self = [super init]) {
         _manager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
         _discoveredPeripherals = [[NSMutableDictionary alloc] init];
+        _messageChannel = messageChannel;
     }
     return self;
 }
@@ -68,10 +72,12 @@
 
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral {
     NSLog(@"centralManager:didConnect %@", peripheral.identifier);
+    [_messageChannel sendMessage:@{@"ConnectionState": @"Connected"}];
 }
 
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(nullable NSError *)error {
     NSLog(@"centralManager:didDisconnectPeripheral: %@ error: %@", peripheral.identifier, error);
+    [_messageChannel sendMessage:@{@"ConnectionState": @"Disconnected"}];
 }
 
 - (FlutterError *_Nullable)onListenWithArguments:(id _Nullable)arguments eventSink:(FlutterEventSink)events {

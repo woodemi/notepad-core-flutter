@@ -6,11 +6,11 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
-import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.*
 import io.flutter.plugin.common.EventChannel.EventSink
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
@@ -19,11 +19,13 @@ import java.nio.ByteOrder
 
 private const val TAG = "NotepadCorePlugin"
 
-class NotepadCorePlugin(private val context: Context) : MethodCallHandler, EventChannel.StreamHandler {
+class NotepadCorePlugin(private val context: Context, val messageChannel: BasicMessageChannel<Any>) : MethodCallHandler, EventChannel.StreamHandler {
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
-            val notepadCorePlugin = NotepadCorePlugin(registrar.context())
+            val basicMessageChannel = BasicMessageChannel(registrar.messenger(), "notepad_core/message", StandardMessageCodec.INSTANCE)
+            val notepadCorePlugin = NotepadCorePlugin(registrar.context(), basicMessageChannel)
+
             MethodChannel(registrar.messenger(), "notepad_core/method").setMethodCallHandler(notepadCorePlugin)
             EventChannel(registrar.messenger(), "notepad_core/event.scanResult").setStreamHandler(notepadCorePlugin)
         }
@@ -55,6 +57,8 @@ class NotepadCorePlugin(private val context: Context) : MethodCallHandler, Event
             else -> result.notImplemented()
         }
     }
+
+    private val mainThreadHandler = Handler(Looper.getMainLooper())
 
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
 
@@ -102,6 +106,11 @@ class NotepadCorePlugin(private val context: Context) : MethodCallHandler, Event
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             if (gatt != connectGatt) return
             Log.v(TAG, "onConnectionStateChange: status($status), newState($newState)")
+            if (newState == BluetoothGatt.STATE_CONNECTED && status == BluetoothGatt.GATT_SUCCESS) {
+                mainThreadHandler.post { messageChannel.send(mapOf("ConnectionState" to "Connected")) }
+            } else {
+                mainThreadHandler.post { messageChannel.send(mapOf("ConnectionState" to "Disconnected")) }
+            }
         }
     }
 }
