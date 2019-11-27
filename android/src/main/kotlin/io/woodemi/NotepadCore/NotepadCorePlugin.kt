@@ -1,5 +1,7 @@
 package io.woodemi.NotepadCore
 
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
@@ -17,7 +19,7 @@ import java.nio.ByteOrder
 
 private const val TAG = "NotepadCorePlugin"
 
-class NotepadCorePlugin(context: Context) : MethodCallHandler, EventChannel.StreamHandler {
+class NotepadCorePlugin(private val context: Context) : MethodCallHandler, EventChannel.StreamHandler {
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
@@ -38,16 +40,27 @@ class NotepadCorePlugin(context: Context) : MethodCallHandler, EventChannel.Stre
                 scanner.stopScan(scanCallback)
                 result.success(null)
             }
+            "connect" -> {
+                connectGatt = bluetoothManager.adapter
+                        .getRemoteDevice(call.argument<String>("deviceId"))
+                        .connectGatt(context, false, gattCallback)
+                result.success(null)
+            }
+            "disconnect" -> {
+                connectGatt?.disconnect()
+                connectGatt?.close()
+                connectGatt = null
+                result.success(null)
+            }
             else -> result.notImplemented()
         }
     }
 
-    val scanner by lazy {
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        bluetoothManager.adapter.bluetoothLeScanner
-    }
+    private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
 
-    val scanCallback = object : ScanCallback() {
+    private val scanner = bluetoothManager.adapter.bluetoothLeScanner
+
+    private val scanCallback = object : ScanCallback() {
         override fun onScanFailed(errorCode: Int) {
             Log.v(TAG, "onScanFailed: $errorCode")
         }
@@ -80,6 +93,15 @@ class NotepadCorePlugin(context: Context) : MethodCallHandler, EventChannel.Stre
         val map = args as? Map<String, Any> ?: return
         when (map["name"]) {
             "scanResult" -> scanResultSink = null
+        }
+    }
+
+    private var connectGatt: BluetoothGatt? = null
+
+    private val gattCallback = object : BluetoothGattCallback() {
+        override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+            if (gatt != connectGatt) return
+            Log.v(TAG, "onConnectionStateChange: status($status), newState($newState)")
         }
     }
 }

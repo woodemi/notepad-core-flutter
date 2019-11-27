@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:notepad_core/notepad_core.dart' as NotepadCore;
 
+import 'NotepadDetailPage.dart';
+
 class NotepadListPage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _NotepadListPageState();
@@ -70,6 +72,11 @@ class _NotepadListPageState extends State<NotepadListPage> {
               title: Text(
                   '${_scanResults[index].name}(${_scanResults[index].rssi})'),
               subtitle: Text(_scanResults[index].deviceId),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => NotepadDetailPage(_scanResults[index]),
+                ));
+              },
             ),
         separatorBuilder: (context, index) => Divider(),
         itemCount: _scanResults.length,
