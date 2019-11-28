@@ -12,6 +12,22 @@ class NotepadDetailPage extends StatefulWidget {
 
 class _NotepadDetailPageState extends State<NotepadDetailPage> {
   @override
+  void initState() {
+    super.initState();
+    notepadConnector.setConnectionChangeHandler(_connectionChangeHandler);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    notepadConnector.setConnectionChangeHandler(null);
+  }
+
+  final ConnectionChangeHandler _connectionChangeHandler = (state) {
+    print('ConnectionChangeHandler $state');
+  };
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
