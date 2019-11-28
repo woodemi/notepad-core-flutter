@@ -64,7 +64,12 @@ class NotepadConnector {
         _connectionChangeHandler(_notepadClient, message['ConnectionState']);
     } else if (message['ServiceState'] != null) {
       if (message['ServiceState'] == 'Discovered')
-        _notepadType.configCharacteristics();
+        _onServicesDiscovered();
     }
+  }
+
+  void _onServicesDiscovered() {
+    _notepadType.configCharacteristics();
+    _notepadClient.completeConnection();
   }
 }
