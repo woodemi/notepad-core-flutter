@@ -7,7 +7,7 @@
 @end
 
 @implementation CBPeripheral (Extensions)
-- (void)setNotifiable:(NSString *)bleInputProperty forService:(NSString *)service forCharacteristic:(NSString *)characteristic {
+- (CBCharacteristic *)getCharacteristic:(NSString *)characteristic ofService:(NSString *)service {
     NSUInteger serviceIndex = [self.services indexOfObjectPassingTest:^BOOL(CBService *obj, NSUInteger idx, BOOL *stop) {
         return [obj.UUID.UUIDString isEqualToString:service];
     }];
@@ -15,8 +15,12 @@
     NSUInteger characteristicIndex = [characteristics indexOfObjectPassingTest:^BOOL(CBCharacteristic *obj, NSUInteger idx, BOOL *stop) {
         return [obj.UUID.UUIDString isEqualToString:characteristic];
     }];
+    return characteristics[characteristicIndex];
+}
 
-    [self setNotifyValue:![bleInputProperty isEqualToString:@"disabled"] forCharacteristic:characteristics[characteristicIndex]];
+- (void)setNotifiable:(NSString *)bleInputProperty forCharacteristic:(NSString *)characteristic ofService:(NSString *)service {
+    [self setNotifyValue:![bleInputProperty isEqualToString:@"disabled"]
+       forCharacteristic:[self getCharacteristic:characteristic ofService:service]];
 }
 @end
 
@@ -78,7 +82,15 @@
         NSString *service = call.arguments[@"service"];
         NSString *characteristic = call.arguments[@"characteristic"];
         NSString *bleInputProperty = call.arguments[@"bleInputProperty"];
-        [_peripheral setNotifiable:bleInputProperty forService:service forCharacteristic:characteristic];
+        [_peripheral setNotifiable:bleInputProperty forCharacteristic:characteristic ofService:service];
+        result(nil);
+    } else if ([call.method isEqualToString:@"writeValue"]) {
+        NSString *service = call.arguments[@"service"];
+        NSString *characteristic = call.arguments[@"characteristic"];
+        FlutterStandardTypedData *value = call.arguments[@"value"];
+        [_peripheral writeValue:[value data]
+              forCharacteristic:[_peripheral getCharacteristic:characteristic ofService:service]
+                           type:CBCharacteristicWriteWithResponse];
         result(nil);
     } else {
         result(FlutterMethodNotImplemented);
@@ -159,6 +171,10 @@
 
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(nullable NSError *)error {
     NSLog(@"peripheral:didUpdateNotificationStateFor %@ %d", characteristic.UUID, characteristic.isNotifying);
+}
+
+- (void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(nullable NSError *)error {
+    NSLog(@"peripheral:didWriteValueForCharacteristic %@ %@ error: %@", characteristic.UUID.UUIDString, characteristic.value, error);
 }
 
 @end

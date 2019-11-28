@@ -27,7 +27,7 @@ class NotepadType {
   }
 
   void sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request) async {
-    // TODO
+    _bleType.writeValue(serviceCharacteristic, request);
     print('on${messageHead}Send: ${hex.encode(request)}');
   }
 

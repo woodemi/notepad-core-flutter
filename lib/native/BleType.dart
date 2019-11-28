@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:tuple/tuple.dart';
 
 import 'notepad_core_native.dart';
@@ -18,5 +20,13 @@ class BleType {
       'characteristic': serviceCharacteristic.item2,
       'bleInputProperty': bleInputProperty.value,
     }).then((_) => print('setNotifiable invokeMethod success'));
+  }
+
+  void writeValue(Tuple2<String, String> serviceCharacteristic, Uint8List value) {
+    method.invokeMethod('writeValue', {
+      'service': serviceCharacteristic.item1,
+      'characteristic': serviceCharacteristic.item2,
+      'value': value,
+    }).then((_) => print('writeValue invokeMethod success'));
   }
 }
