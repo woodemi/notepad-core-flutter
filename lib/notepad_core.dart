@@ -56,8 +56,14 @@ class NotepadConnector {
   Future<dynamic> _handleMessage(dynamic message) async {
     print('handleMessage $message');
     if (message['ConnectionState'] != null) {
-      if (_connectionChangeHandler != null)
+      if (message['ConnectionState'] == 'Connected')
+        _method.invokeMethod('discoverServices').then((_) =>
+            print('discoverServices invokeMethod success'));
+      else
         _connectionChangeHandler(message['ConnectionState']);
+    } else if (message['ServiceState'] != null) {
+      if (message['ServiceState'] == 'Discovered')
+        print('ServiceState Discovered');
     }
   }
 }

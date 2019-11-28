@@ -49,9 +49,13 @@ class NotepadCorePlugin(private val context: Context, val messageChannel: BasicM
                 result.success(null)
             }
             "disconnect" -> {
-                connectGatt?.disconnect()
-                connectGatt?.close()
+                connectGatt.disconnect()
+                connectGatt.close()
                 connectGatt = null
+                result.success(null)
+            }
+            "discoverServices" -> {
+                connectGatt.discoverServices()
                 result.success(null)
             }
             else -> result.notImplemented()
@@ -112,12 +116,27 @@ class NotepadCorePlugin(private val context: Context, val messageChannel: BasicM
                 mainThreadHandler.post { messageChannel.send(mapOf("ConnectionState" to "Disconnected")) }
             }
         }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            if (gatt != connectGatt || status != BluetoothGatt.GATT_SUCCESS) return
+            gatt.services.forEach { service ->
+                Log.v(TAG, "Service " + service.uuid)
+                service.characteristics.forEach { characteristic ->
+                    Log.v(TAG, "    Characteristic ${characteristic.uuid}")
+                    characteristic.descriptors.forEach {
+                        Log.v(TAG, "        Descriptor ${it.uuid}")
+                    }
+                }
+            }
+
+            mainThreadHandler.post { messageChannel.send(mapOf("ServiceState" to "Discovered")) }
+        }
     }
 }
 
 val ScanResult.manufacturerData: ByteArray?
     get() {
-        val sparseArray = scanRecord?.manufacturerSpecificData ?: return null
+        val sparseArray = scanRecord.manufacturerSpecificData ?: return null
         if (sparseArray.size() == 0) return null
 
         return sparseArray.keyAt(0).toShort().toByteArray() + sparseArray.valueAt(0)
