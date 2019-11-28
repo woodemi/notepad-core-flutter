@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:notepad_core/notepad_core.dart' as NotepadCore;
+import 'package:notepad_core/notepad_core.dart';
+
+import 'NotepadDetailPage.dart';
 
 class NotepadListPage extends StatefulWidget {
   @override
@@ -10,12 +12,12 @@ class NotepadListPage extends StatefulWidget {
 }
 
 class _NotepadListPageState extends State<NotepadListPage> {
-  StreamSubscription<NotepadCore.NotepadScanResult> _subscription;
+  StreamSubscription<NotepadScanResult> _subscription;
 
   @override
   void initState() {
     super.initState();
-    _subscription = NotepadCore.scanResultStream.listen((result) {
+    _subscription = notepadConnector.scanResultStream.listen((result) {
       if (!_scanResults.any((r) => r.deviceId == result.deviceId)) {
         setState(() => _scanResults.add(result));
       }
@@ -50,17 +52,17 @@ class _NotepadListPageState extends State<NotepadListPage> {
       children: <Widget>[
         RaisedButton(
           child: Text('startScan'),
-          onPressed: () => NotepadCore.startScan(),
+          onPressed: () => notepadConnector.startScan(),
         ),
         RaisedButton(
           child: Text('stopScan'),
-          onPressed: () => NotepadCore.stopScan(),
+          onPressed: () => notepadConnector.stopScan(),
         ),
       ],
     );
   }
 
-  var _scanResults = List<NotepadCore.NotepadScanResult>();
+  var _scanResults = List<NotepadScanResult>();
 
   Widget buildListView() {
     return Expanded(
@@ -70,6 +72,11 @@ class _NotepadListPageState extends State<NotepadListPage> {
               title: Text(
                   '${_scanResults[index].name}(${_scanResults[index].rssi})'),
               subtitle: Text(_scanResults[index].deviceId),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => NotepadDetailPage(_scanResults[index]),
+                ));
+              },
             ),
         separatorBuilder: (context, index) => Divider(),
         itemCount: _scanResults.length,
