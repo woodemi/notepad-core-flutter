@@ -1,6 +1,27 @@
 #import <CoreBluetooth/CoreBluetooth.h>
 #import "NotepadCorePlugin.h"
 
+# pragma CBPeripheral+Extensions
+
+@interface CBPeripheral (Extensions)
+@end
+
+@implementation CBPeripheral (Extensions)
+- (void)setNotifiable:(NSString *)bleInputProperty forService:(NSString *)service forCharacteristic:(NSString *)characteristic {
+    NSUInteger serviceIndex = [self.services indexOfObjectPassingTest:^BOOL(CBService *obj, NSUInteger idx, BOOL *stop) {
+        return [obj.UUID.UUIDString isEqualToString:service];
+    }];
+    NSArray<CBCharacteristic *> *characteristics = self.services[serviceIndex].characteristics;
+    NSUInteger characteristicIndex = [characteristics indexOfObjectPassingTest:^BOOL(CBCharacteristic *obj, NSUInteger idx, BOOL *stop) {
+        return [obj.UUID.UUIDString isEqualToString:characteristic];
+    }];
+
+    [self setNotifyValue:![bleInputProperty isEqualToString:@"disabled"] forCharacteristic:characteristics[characteristicIndex]];
+}
+@end
+
+# pragma NotepadCorePlugin
+
 @interface NotepadCorePlugin () <CBCentralManagerDelegate, FlutterStreamHandler, CBPeripheralDelegate>
 @property(nonatomic, strong) CBCentralManager *manager;
 @property(nonatomic, strong) NSMutableDictionary<NSString *, CBPeripheral *> *discoveredPeripherals;
@@ -52,6 +73,12 @@
         result(nil);
     } else if ([call.method isEqualToString:@"discoverServices"]) {
         [_peripheral discoverServices:nil];
+        result(nil);
+    } else if ([call.method isEqualToString:@"setNotifiable"]) {
+        NSString *service = call.arguments[@"service"];
+        NSString *characteristic = call.arguments[@"characteristic"];
+        NSString *bleInputProperty = call.arguments[@"bleInputProperty"];
+        [_peripheral setNotifiable:bleInputProperty forService:service forCharacteristic:characteristic];
         result(nil);
     } else {
         result(FlutterMethodNotImplemented);
@@ -128,6 +155,10 @@
         NSLog(@"peripheral:didDiscoverCharacteristicsForService (%@, %@)", service.UUID.UUIDString, characteristic.UUID.UUIDString);
     }
     dispatch_group_leave(_serviceConfigGroup);
+}
+
+- (void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(nullable NSError *)error {
+    NSLog(@"peripheral:didUpdateNotificationStateFor %@ %d", characteristic.UUID, characteristic.isNotifying);
 }
 
 @end
