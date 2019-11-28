@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 
 import 'Common.dart';
 import 'Notepad.dart';
+import 'NotepadClient.dart';
+import 'NotepadType.dart';
 
 export 'Notepad.dart';
 
@@ -10,7 +12,7 @@ const _event_scanResult = const EventChannel('notepad_core/event.scanResult');
 const _message = BasicMessageChannel(
     'notepad_core/message', StandardMessageCodec());
 
-typedef ConnectionChangeHandler = void Function(String state);
+typedef ConnectionChangeHandler = void Function(NotepadClient client, String state);
 
 final notepadConnector = NotepadConnector._();
 
@@ -36,13 +38,20 @@ class NotepadConnector {
       .map((item) => NotepadScanResult.fromMap(item))
       .where(support);
 
+  NotepadClient _notepadClient;
+  NotepadType _notepadType;
+
   void connect(NotepadScanResult scanResult) {
+    _notepadClient = create(scanResult);
+    _notepadType = NotepadType(_notepadClient);
     _method.invokeMethod('connect', {
       'deviceId': scanResult.deviceId,
     }).then((_) => print('connect invokeMethod success'));
   }
 
   void disconnect() {
+    _notepadClient = null;
+    _notepadType = null;
     _method.invokeMethod('disconnect')
         .then((_) => print('disconnect invokeMethod success'));
   }
@@ -60,10 +69,10 @@ class NotepadConnector {
         _method.invokeMethod('discoverServices').then((_) =>
             print('discoverServices invokeMethod success'));
       else
-        _connectionChangeHandler(message['ConnectionState']);
+        _connectionChangeHandler(_notepadClient, message['ConnectionState']);
     } else if (message['ServiceState'] != null) {
       if (message['ServiceState'] == 'Discovered')
-        print('ServiceState Discovered');
+        _notepadType.configCharacteristics();
     }
   }
 }
