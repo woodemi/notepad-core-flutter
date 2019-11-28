@@ -10,6 +10,8 @@ const _event_scanResult = const EventChannel('notepad_core/event.scanResult');
 const _message = BasicMessageChannel(
     'notepad_core/message', StandardMessageCodec());
 
+typedef ConnectionChangeHandler = void Function(String state);
+
 final notepadConnector = NotepadConnector._();
 
 class NotepadConnector {
@@ -45,17 +47,23 @@ class NotepadConnector {
         .then((_) => print('disconnect invokeMethod success'));
   }
 
+  ConnectionChangeHandler _connectionChangeHandler;
+
+  void setConnectionChangeHandler(ConnectionChangeHandler handler) {
+    _connectionChangeHandler = handler;
+  }
+
   Future<dynamic> _handleMessage(dynamic message) async {
     print('handleMessage $message');
-    var connectionState = message['ConnectionState'];
-    switch (connectionState) {
-      case 'Connected':
-        print('ConnectionState Connected');
-        break;
-      case 'Disconnected':
-      default:
-        print('ConnectionState Disconnected');
-        break;
+    if (message['ConnectionState'] != null) {
+      if (message['ConnectionState'] == 'Connected')
+        _method.invokeMethod('discoverServices').then((_) =>
+            print('discoverServices invokeMethod success'));
+      else
+        _connectionChangeHandler(message['ConnectionState']);
+    } else if (message['ServiceState'] != null) {
+      if (message['ServiceState'] == 'Discovered')
+        print('ServiceState Discovered');
     }
   }
 }

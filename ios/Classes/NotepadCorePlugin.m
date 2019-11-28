@@ -1,10 +1,12 @@
 #import <CoreBluetooth/CoreBluetooth.h>
 #import "NotepadCorePlugin.h"
 
-@interface NotepadCorePlugin () <CBCentralManagerDelegate, FlutterStreamHandler>
+@interface NotepadCorePlugin () <CBCentralManagerDelegate, FlutterStreamHandler, CBPeripheralDelegate>
 @property(nonatomic, strong) CBCentralManager *manager;
 @property(nonatomic, strong) NSMutableDictionary<NSString *, CBPeripheral *> *discoveredPeripherals;
 @property(nonatomic, strong) CBPeripheral *peripheral;
+
+@property(nonatomic, strong) dispatch_group_t serviceConfigGroup;
 
 @property(nonatomic, strong) FlutterBasicMessageChannel *messageChannel;
 @property(nonatomic, strong) FlutterEventSink scanResultSink;
@@ -41,16 +43,22 @@
     } else if ([call.method isEqualToString:@"connect"]) {
         NSString *deviceId = call.arguments[@"deviceId"];
         _peripheral = _discoveredPeripherals[deviceId];
+        _peripheral.delegate = self;
         [_manager connectPeripheral:_peripheral options:nil];
         result(nil);
     } else if ([call.method isEqualToString:@"disconnect"]) {
         [_manager cancelPeripheralConnection:_peripheral];
         _peripheral = nil;
         result(nil);
+    } else if ([call.method isEqualToString:@"discoverServices"]) {
+        [_peripheral discoverServices:nil];
+        result(nil);
     } else {
         result(FlutterMethodNotImplemented);
     }
 }
+
+# pragma CBCentralManagerDelegate
 
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central {
     NSLog(@"centralManagerDidUpdateState %ld", (long) central.state);
@@ -80,6 +88,8 @@
     [_messageChannel sendMessage:@{@"ConnectionState": @"Disconnected"}];
 }
 
+# pragma FlutterStreamHandler
+
 - (FlutterError *_Nullable)onListenWithArguments:(id _Nullable)arguments eventSink:(FlutterEventSink)events {
     NSString *name = [arguments objectForKey:@"name"];
     NSLog(@"NotepadCorePlugin onListenWithArguments：%@", name);
@@ -98,5 +108,26 @@
     return nil;
 }
 
+# pragma CBPeripheralDelegate
+
+- (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(nullable NSError *)error {
+    NSLog(@"peripheral: %@ didDiscoverServices: %@", peripheral.identifier, error);
+    _serviceConfigGroup = dispatch_group_create();
+    for (CBService *service in peripheral.services) {
+        dispatch_group_enter(_serviceConfigGroup);
+        [peripheral discoverCharacteristics:nil forService:service];
+    }
+    dispatch_group_notify(_serviceConfigGroup, dispatch_get_main_queue(), ^{
+        self->_serviceConfigGroup = nil;
+        [self->_messageChannel sendMessage:@{@"ServiceState": @"Discovered"}];
+    });
+}
+
+- (void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(nullable NSError *)error {
+    for (CBCharacteristic *characteristic in service.characteristics) {
+        NSLog(@"peripheral:didDiscoverCharacteristicsForService (%@, %@)", service.UUID.UUIDString, characteristic.UUID.UUIDString);
+    }
+    dispatch_group_leave(_serviceConfigGroup);
+}
 
 @end
