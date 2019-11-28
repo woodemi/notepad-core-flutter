@@ -2,6 +2,7 @@ package io.woodemi.NotepadCore
 
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
@@ -16,6 +17,7 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.*
 
 private const val TAG = "NotepadCorePlugin"
 
@@ -57,6 +59,12 @@ class NotepadCorePlugin(private val context: Context, val messageChannel: BasicM
             "discoverServices" -> {
                 connectGatt?.discoverServices()
                 result.success(null)
+            }
+            "setNotifiable" -> {
+                val service = call.argument<String>("service")!!
+                val characteristic = call.argument<String>("characteristic")!!
+                val bleInputProperty = call.argument<String>("bleInputProperty")!!
+                connectGatt?.setNotifiable(service to characteristic, bleInputProperty)
             }
             else -> result.notImplemented()
         }
@@ -131,6 +139,11 @@ class NotepadCorePlugin(private val context: Context, val messageChannel: BasicM
 
             mainThreadHandler.post { messageChannel.send(mapOf("ServiceState" to "Discovered")) }
         }
+
+        override fun onDescriptorWrite(gatt: BluetoothGatt?, descriptor: BluetoothGattDescriptor, status: Int) {
+            if (gatt != connectGatt) return
+            Log.v(TAG, "onDescriptorWrite ${descriptor.uuid}, ${descriptor.characteristic.uuid}, $status")
+        }
     }
 }
 
@@ -144,3 +157,17 @@ val ScanResult.manufacturerData: ByteArray?
 
 fun Short.toByteArray(byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN): ByteArray =
         ByteBuffer.allocate(2 /*Short.SIZE_BYTES*/).order(byteOrder).putShort(this).array()
+
+private val DESC__CLIENT_CHAR_CONFIGURATION = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+
+fun BluetoothGatt.setNotifiable(serviceCharacteristic: Pair<String, String>, bleInputProperty: String) {
+    val descriptor = getService(UUID.fromString(serviceCharacteristic.first))
+            .getCharacteristic(UUID.fromString(serviceCharacteristic.second))
+            .getDescriptor(DESC__CLIENT_CHAR_CONFIGURATION)
+    val (value, enable) = when (bleInputProperty) {
+        "indication" -> BluetoothGattDescriptor.ENABLE_INDICATION_VALUE to true
+        else -> BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE to false
+    }
+    descriptor.value = value
+    setCharacteristicNotification(descriptor.characteristic, enable) && writeDescriptor(descriptor)
+}
