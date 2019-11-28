@@ -9,6 +9,8 @@ typedef ConnectionChangeHandler = void Function(NotepadClient client, String sta
 final notepadConnector = NotepadConnector._();
 
 class NotepadConnector {
+  final tag = 'NotepadConnector';
+
   NotepadConnector._() {
     message.setMessageHandler(_handleMessage);
   }
@@ -55,7 +57,7 @@ class NotepadConnector {
   }
 
   Future<dynamic> _handleMessage(dynamic message) async {
-    print('handleMessage $message');
+    print('$tag handleMessage $message');
     if (message['ConnectionState'] != null) {
       if (message['ConnectionState'] == 'Connected')
         method.invokeMethod('discoverServices').then((_) =>
@@ -68,8 +70,8 @@ class NotepadConnector {
     }
   }
 
-  void _onServicesDiscovered() {
-    _notepadType.configCharacteristics();
+  void _onServicesDiscovered() async {
+    await _notepadType.configCharacteristics();
     _notepadClient.completeConnection();
   }
 }

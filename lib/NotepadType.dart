@@ -16,14 +16,11 @@ class NotepadType {
     _notepadClient.notepadType = this;
   }
 
-  void configCharacteristics() {
-    for (var serviceCharacteristic in _notepadClient.inputIndicationCharacteristics)
-      configInputCharacteristic(serviceCharacteristic, BleInputProperty.indication);
-  }
-
-  void configInputCharacteristic(Tuple2<String, String> serviceCharacteristic, BleInputProperty inputProperty) {
-    print('configInputCharacteristic $serviceCharacteristic, $inputProperty');
-    _bleType.setNotifiable(serviceCharacteristic, inputProperty);
+  Future<void> configCharacteristics() async {
+    for (var serviceCharacteristic in _notepadClient.inputIndicationCharacteristics) {
+      print('configInputCharacteristic $serviceCharacteristic, indication');
+      await _bleType.setNotifiable(serviceCharacteristic, BleInputProperty.indication);
+    }
   }
 
   void sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request) async {

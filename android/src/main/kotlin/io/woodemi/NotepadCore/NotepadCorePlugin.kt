@@ -18,17 +18,22 @@ import java.util.*
 
 private const val TAG = "NotepadCorePlugin"
 
-class NotepadCorePlugin(private val context: Context, val messageChannel: BasicMessageChannel<Any>) : MethodCallHandler, EventChannel.StreamHandler {
+class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.StreamHandler {
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
-            val basicMessageChannel = BasicMessageChannel(registrar.messenger(), "notepad_core/message", StandardMessageCodec.INSTANCE)
-            val notepadCorePlugin = NotepadCorePlugin(registrar.context(), basicMessageChannel)
-
+            val notepadCorePlugin = NotepadCorePlugin(registrar)
             MethodChannel(registrar.messenger(), "notepad_core/method").setMethodCallHandler(notepadCorePlugin)
             EventChannel(registrar.messenger(), "notepad_core/event.scanResult").setStreamHandler(notepadCorePlugin)
         }
     }
+
+    private val context = registrar.context()
+
+    private val messageChannel = BasicMessageChannel(registrar.messenger(), "notepad_core/message", StandardMessageCodec.INSTANCE)
+
+    private val characteristicConfigChannel = BasicMessageChannel(registrar.messenger(),
+            "notepad_core/message.characteristicConfig", StandardMessageCodec.INSTANCE)
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         Log.d(TAG, "onMethodCall " + call.method)
@@ -151,6 +156,7 @@ class NotepadCorePlugin(private val context: Context, val messageChannel: BasicM
         override fun onDescriptorWrite(gatt: BluetoothGatt?, descriptor: BluetoothGattDescriptor, status: Int) {
             if (gatt != connectGatt) return
             Log.v(TAG, "onDescriptorWrite ${descriptor.uuid}, ${descriptor.characteristic.uuid}, $status")
+            mainThreadHandler.post { characteristicConfigChannel.send(descriptor.characteristic.uuid.uuidString) }
         }
 
         override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic, status: Int) {
@@ -170,6 +176,9 @@ val ScanResult.manufacturerData: ByteArray?
 
 fun Short.toByteArray(byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN): ByteArray =
         ByteBuffer.allocate(2 /*Short.SIZE_BYTES*/).order(byteOrder).putShort(this).array()
+
+val UUID.uuidString
+    get() = this.toString().toUpperCase()
 
 fun BluetoothGatt.getCharacteristic(serviceCharacteristic: Pair<String, String>) =
         getService(UUID.fromString(serviceCharacteristic.first)).getCharacteristic(UUID.fromString(serviceCharacteristic.second))
