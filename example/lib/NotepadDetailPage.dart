@@ -23,7 +23,7 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> {
     notepadConnector.setConnectionChangeHandler(null);
   }
 
-  final ConnectionChangeHandler _connectionChangeHandler = (client, state) {
+  final ConnectionChangeHandler _connectionChangeHandler = (NotepadClient client, String state) {
     print('ConnectionChangeHandler $client $state');
   };
 
