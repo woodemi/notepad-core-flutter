@@ -28,9 +28,11 @@ class NotepadType {
     print('on${messageHead}Send: ${hex.encode(request)}');
   }
 
-  Future<Uint8List> receiveResponseAsync(String messageHead, Tuple2<String, String> commandResponseCharacteristic, Predicate intercept) async {
-    // TODO
-    var response = Uint8List.fromList([0, 0]);
+  Stream<Uint8List> receiveValue(Tuple2<String, String> serviceCharacteristic) =>
+      _bleType.inputValueStream.where((cv) => cv.item1 == serviceCharacteristic.item2).map((cv) => cv.item2);
+
+  Future<Uint8List> receiveResponseAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Predicate intercept) async {
+    var response = await receiveValue(serviceCharacteristic).firstWhere(intercept);
     print('on${messageHead}Receive: ${hex.encode(response)}');
     return response;
   }
