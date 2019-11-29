@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:notepad_core/Common.dart';
+import 'package:notepad_core/Notepad.dart';
 import 'package:notepad_core/NotepadClient.dart';
 import 'package:tuple/tuple.dart';
 
@@ -68,5 +69,13 @@ class WoodemiClient extends NotepadClient {
       default:
         throw Exception('Unknown error');
     }
+  }
+
+  @override
+  Future<void> setMode(NotepadMode notepadMode) async {
+    var mode = notepadMode == NotepadMode.Sync ? 0x00 : 0x01;
+    await notepadType.executeCommand(WoodemiCommand(
+      request: Uint8List.fromList([0x05, mode]),
+    ));
   }
 }
