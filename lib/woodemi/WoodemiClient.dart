@@ -22,6 +22,10 @@ const WOODEMI_PREFIX = [0x57, 0x44, 0x4d]; // 'WDM'
 
 final defaultAuthToken = Uint8List.fromList([0x00, 0x00, 0x00, 0x01]);
 
+const A1_WIDTH = 14800;
+const A1_HEIGHT = 21000;
+
+
 enum AccessResult {
   Denied,      // Device claimed by other user
   Confirmed,   // Access confirmed, indicating device not claimed by anyone
@@ -51,6 +55,7 @@ class WoodemiClient extends NotepadClient {
 
   @override
   Future<void> completeConnection(void awaitConfirm(bool)) async {
+    await super.completeConnection(awaitConfirm);
     var accessResult = await _checkAccess(defaultAuthToken, 10, awaitConfirm);
     switch(accessResult) {
       case AccessResult.Denied:
@@ -84,6 +89,7 @@ class WoodemiClient extends NotepadClient {
     }
   }
 
+  //#region SyncInput
   @override
   Future<String> getDeviceName() async {
     final command = WoodemiCommand(
@@ -183,4 +189,13 @@ class WoodemiClient extends NotepadClient {
       ),
     );
   }
+
+  @override
+  List<NotePenPointer> parseSyncData(Uint8List value) {
+    return parseSyncPointer(value).where((pointer) {
+      return 0 <= pointer.x && pointer.x <= A1_WIDTH
+          && 0<= pointer.y && pointer.y <= A1_HEIGHT;
+    }).toList();
+  }
+  //#endregion
 }
