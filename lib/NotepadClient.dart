@@ -16,6 +16,10 @@ abstract class NotepadClient {
 
   Tuple2<String, String> get syncInputCharacteristic;
 
+  Tuple2<String, String> get fileInputControlRequestCharacteristic;
+
+  Tuple2<String, String> get fileInputControlResponseCharacteristic;
+
   List<Tuple2<String, String>> get inputIndicationCharacteristics;
 
   List<Tuple2<String, String>> get inputNotificationCharacteristics;
@@ -39,5 +43,7 @@ abstract class NotepadClient {
 
   //#region ImportMemo
   Future<MemoSummary> getMemoSummary();
+
+  Future<MemoInfo> getMemoInfo();
   //#endregion
 }

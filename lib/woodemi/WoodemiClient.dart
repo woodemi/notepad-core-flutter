@@ -5,6 +5,7 @@ import 'package:notepad_core/Notepad.dart';
 import 'package:notepad_core/NotepadClient.dart';
 import 'package:tuple/tuple.dart';
 
+import 'ImageTransimission.dart';
 import 'Woodemi.dart';
 
 const SUFFIX = 'BA5E-F4EE-5CA1-EB1E5E4B1CE0';
@@ -15,6 +16,10 @@ const CHAR__COMMAND_RESPONSE = CHAR__COMMAND_REQUEST;
 
 const SERV__SYNC = '57444D06-$SUFFIX';
 const CHAR__SYNC_INPUT = '57444D07-$SUFFIX';
+
+const SERV__FILE_INPUT = '57444D03-$SUFFIX';
+const CHAR__FILE_INPUT_CONTROL_REQUEST = '57444D04-$SUFFIX';
+const CHAR__FILE_INPUT_CONTROL_RESPONSE = CHAR__FILE_INPUT_CONTROL_REQUEST;
 
 const WOODEMI_PREFIX = [0x57, 0x44, 0x4d]; // 'WDM'
 
@@ -42,8 +47,15 @@ class WoodemiClient extends NotepadClient {
   Tuple2<String, String> get syncInputCharacteristic => const Tuple2(SERV__SYNC, CHAR__SYNC_INPUT);
 
   @override
+  Tuple2<String, String> get fileInputControlRequestCharacteristic => const Tuple2(SERV__FILE_INPUT, CHAR__FILE_INPUT_CONTROL_REQUEST);
+
+  @override
+  Tuple2<String, String> get fileInputControlResponseCharacteristic => const Tuple2(SERV__FILE_INPUT, CHAR__FILE_INPUT_CONTROL_RESPONSE);
+
+  @override
   List<Tuple2<String, String>> get inputIndicationCharacteristics => [
     commandResponseCharacteristic,
+    fileInputControlResponseCharacteristic,
   ];
 
   @override
@@ -110,8 +122,8 @@ class WoodemiClient extends NotepadClient {
   Future<MemoSummary> getMemoSummary() {
     var handle = (Uint8List value) {
       var byteData = value.buffer.asByteData();
-      var position = 0;
-      var totalCapacity = byteData.getUint32(position += 1, Endian.little); // skip 1
+      var position = 1; // skip 1
+      var totalCapacity = byteData.getUint32(position, Endian.little);
       var freeCapacity = byteData.getUint32(position += 4, Endian.little);
       var usedCapacity = byteData.getUint32(position += 4, Endian.little);
       var memoCount = byteData.getUint16(position += 4, Endian.little);
@@ -123,5 +135,50 @@ class WoodemiClient extends NotepadClient {
       handle: handle,
     ));
   }
+
+  @override
+  Future<MemoInfo> getMemoInfo() async {
+    var largeDataInfo = await getLargeDataInfo();
+    return MemoInfo(
+      largeDataInfo.sizeInByte - ImageTransmission.EMPTY_LENGTH,
+      largeDataInfo.createdAt,
+      largeDataInfo.partIndex,
+      largeDataInfo.restCount,
+    );
+  }
+
+  Future<MemoInfo> getLargeDataInfo() async {
+    var data = fileInfo.item1 + fileInfo.item2;
+    var handle = (Uint8List value) {
+      var byteData = value.buffer.asByteData();
+      var position = 1; // skip 1
+      var partIndex = byteData.getUint8(position);
+      var restCount = byteData.getUint8(position += 1);
+
+      position += 1;
+      var chars = value.sublist(position, position + fileInfo.item2.length);
+      var seconds = int.parse(String.fromCharCodes(chars, 0, chars.length), radix: 16);
+      var createdAt = Duration(seconds: seconds).inMilliseconds;
+      
+      var sizeInByte = byteData.getUint32(position += fileInfo.item2.length, Endian.little);
+      return MemoInfo(sizeInByte, createdAt, partIndex, restCount);
+    };
+
+    return notepadType.executeFileInputControl(WoodemiCommand(
+      request: Uint8List.fromList([0x02] + data),
+      intercept: (value) => value.first == 0x03,
+      handle: handle,
+    ));
+  }
+
+  final fileInfo = Tuple2(
+    Uint8List.fromList([0x00, 0x01]), // imageId
+    Uint8List.fromList([ // imageVersion
+      0x01, 0x00, 0x00, // Build Version
+      0x41, // Stack Version
+      0x11, 0x11, 0x11, // Hardware Id
+      0x01 // Manufacturer Id
+    ])
+  );
   //#endregion
 }
