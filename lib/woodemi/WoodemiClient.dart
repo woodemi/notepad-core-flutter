@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:notepad_core/Common.dart';
 import 'package:notepad_core/NotepadClient.dart';
 import 'package:tuple/tuple.dart';
 
@@ -15,6 +16,13 @@ const WOODEMI_PREFIX = [0x57, 0x44, 0x4d]; // 'WDM'
 
 final defaultAuthToken = Uint8List.fromList([0x00, 0x00, 0x00, 0x01]);
 
+enum AccessResult {
+  Denied,      // Device claimed by other user
+  Confirmed,   // Access confirmed, indicating device not claimed by anyone
+  Unconfirmed, // Access unconfirmed, as user doesn't confirm before timeout
+  Approved     // Device claimed by this user
+}
+
 class WoodemiClient extends NotepadClient {
   @override
   Tuple2<String, String> get commandRequestCharacteristic => const Tuple2(SERV__COMMAND, CHAR__COMMAND_REQUEST);
@@ -28,11 +36,19 @@ class WoodemiClient extends NotepadClient {
   ];
 
   @override
-  void completeConnection() {
-    _checkAccess(defaultAuthToken, 10);
+  Future<void> completeConnection(void awaitConfirm(bool)) async {
+    var accessResult = await _checkAccess(defaultAuthToken, 10, awaitConfirm);
+    switch(accessResult) {
+      case AccessResult.Denied:
+        throw AccessException.Denied;
+      case AccessResult.Unconfirmed:
+        throw AccessException.Unconfirmed;
+      default:
+        break;
+    }
   }
 
-  Future<void> _checkAccess(Uint8List authToken, int seconds) async {
+  Future<AccessResult> _checkAccess(Uint8List authToken, int seconds, void awaitConfirm(bool)) async {
     var command = WoodemiCommand(
       request: Uint8List.fromList([0x01, seconds] + authToken),
       intercept: (data) => data.first == 0x02,
@@ -41,16 +57,16 @@ class WoodemiClient extends NotepadClient {
     var response = await notepadType.executeCommand(command);
     switch(response) {
       case 0x00:
-        print('TODO Denied');
-        break;
+        return AccessResult.Denied;
       case 0x01:
-        print('TODO AwaitConfirm');
-        break;
+        awaitConfirm(true);
+        var confirm = await notepadType.receiveResponseAsync('Confirm',
+            commandResponseCharacteristic, (value) => value.first == 0x03);
+        return confirm[1] == 0x00 ? AccessResult.Confirmed : AccessResult.Unconfirmed;
       case 0x02:
-        print('TODO Approved');
-        break;
+        return AccessResult.Approved;
       default:
-        break;
+        throw Exception('Unknown error');
     }
   }
 }

@@ -11,5 +11,5 @@ abstract class NotepadClient {
 
   NotepadType notepadType;
 
-  void completeConnection();
+  Future<void> completeConnection(void awaitConfirm(bool));
 }

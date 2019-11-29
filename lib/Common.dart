@@ -18,3 +18,12 @@ NotepadClient create(NotepadScanResult scanResult) {
 bool startWith<T>(List<T> src, List<T> prefix) =>
     src.length >= prefix.length &&
     listEquals(src.take(prefix.length).toList(), prefix);
+
+class AccessException implements Exception {
+  static final Denied = AccessException._('Notepad claimed by other user');
+  static final Unconfirmed = AccessException._('User does not confirm before timeout');
+
+  final String message;
+
+  AccessException._(this.message);
+}
