@@ -10,7 +10,7 @@ class NotepadDetailPage extends StatefulWidget {
   State<StatefulWidget> createState() => _NotepadDetailPageState();
 }
 
-class _NotepadDetailPageState extends State<NotepadDetailPage> {
+class _NotepadDetailPageState extends State<NotepadDetailPage> implements NotepadClientCallback {
   @override
   void initState() {
     super.initState();
@@ -29,9 +29,16 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> {
     print('handleConnectionChange $client $state');
     if (state == 'Connected') {
       _notepadClient = client;
+      _notepadClient.callback = this;
     } else {
+      _notepadClient?.callback = null;
       _notepadClient = null;
     }
+  }
+
+  @override
+  void handlePointer(List<NotePenPointer> list) {
+    print('handlePointer ${list.length}');
   }
 
   @override
