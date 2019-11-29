@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:tuple/tuple.dart';
 
 import 'Notepad.dart';
@@ -17,6 +19,22 @@ abstract class NotepadClient {
   NotepadType notepadType;
 
   Future<void> completeConnection(void awaitConfirm(bool));
+
+  Future<String> getDeviceName();
+
+  Future<void> setDeviceName(String name);
+
+  Future<BatteryInfo> getBatteryInfo();
+
+  Future<int> getDeviceDate();
+
+  Future<void> setDeviceDate(int date);
+
+  Future<int> getAutoLockTime(); // minute
+
+  Future<void> setAutoLockTime(int time); // minute
+
+  Future<VersionInfo> getVersionInfo();
 
   Future<void> setMode(NotepadMode notepadMode);
 }
