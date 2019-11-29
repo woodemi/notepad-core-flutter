@@ -54,7 +54,8 @@ class BleType {
       _characteristicConfigController.add(message['characteristicConfig']);
     } else if (message['characteristicValue'] != null) {
       var characteristicValue = message['characteristicValue'];
-      _characteristicValueController.add(Tuple2(characteristicValue['characteristic'], characteristicValue['value']));
+      var value = Uint8List.fromList(characteristicValue['value']); // In case of _Uint8ArrayView
+      _characteristicValueController.add(Tuple2(characteristicValue['characteristic'], value));
     }
   }
 }
