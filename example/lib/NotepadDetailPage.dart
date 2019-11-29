@@ -84,7 +84,14 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
                 child: Text('getMemoSummary'),
                 onPressed: () async {
                   var memoSummary = await _notepadClient.getMemoSummary();
-                  print('getMemoSummary ${memoSummary}');
+                  print('getMemoSummary $memoSummary');
+                },
+              ),
+              RaisedButton(
+                child: Text('getMemoInfo'),
+                onPressed: () async {
+                  var memoInfo = await _notepadClient.getMemoInfo();
+                  print('getMemoInfo $memoInfo');
                 },
               ),
             ],

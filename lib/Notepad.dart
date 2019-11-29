@@ -58,3 +58,17 @@ class MemoSummary {
   @override
   String toString() => '$memoCount, $totalCapacity, $freeCapacity, $usedCapacity';
 }
+
+class MemoInfo {
+  final int sizeInByte;
+  // milliseconds
+  final int createdAt;
+  final int partIndex;
+  // Rest part count in current transportation
+  final int restCount;
+
+  MemoInfo(this.sizeInByte, this.createdAt, this.partIndex, this.restCount);
+
+  @override
+  String toString() => '$sizeInByte, $createdAt, $partIndex, $restCount';
+}
