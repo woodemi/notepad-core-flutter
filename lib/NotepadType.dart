@@ -21,6 +21,10 @@ class NotepadType {
       print('configInputCharacteristic $serviceCharacteristic, indication');
       await _bleType.setNotifiable(serviceCharacteristic, BleInputProperty.indication);
     }
+    for (var serviceCharacteristic in _notepadClient.inputNotificationCharacteristics) {
+      print('configInputCharacteristic $serviceCharacteristic, notification');
+      await _bleType.setNotifiable(serviceCharacteristic, BleInputProperty.notification);
+    }
   }
 
   void sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request) async {

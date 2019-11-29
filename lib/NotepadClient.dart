@@ -8,7 +8,11 @@ abstract class NotepadClient {
 
   Tuple2<String, String> get commandResponseCharacteristic;
 
+  Tuple2<String, String> get syncInputCharacteristic;
+
   List<Tuple2<String, String>> get inputIndicationCharacteristics;
+
+  List<Tuple2<String, String>> get inputNotificationCharacteristics;
 
   NotepadType notepadType;
 
