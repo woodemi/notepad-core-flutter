@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:notepad_core/Common.dart';
@@ -50,7 +51,7 @@ class WoodemiClient extends NotepadClient {
   @override
   Future<void> completeConnection(void awaitConfirm(bool)) async {
     var accessResult = await _checkAccess(defaultAuthToken, 10, awaitConfirm);
-    switch(accessResult) {
+    switch (accessResult) {
       case AccessResult.Denied:
         throw AccessException.Denied;
       case AccessResult.Unconfirmed:
@@ -67,7 +68,7 @@ class WoodemiClient extends NotepadClient {
       handle: (data) => data[1],
     );
     var response = await notepadType.executeCommand(command);
-    switch(response) {
+    switch (response) {
       case 0x00:
         return AccessResult.Denied;
       case 0x01:
@@ -80,6 +81,31 @@ class WoodemiClient extends NotepadClient {
       default:
         throw Exception('Unknown error');
     }
+  }
+
+  @override
+  Future<String> getDeviceName() async {
+    final command = WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x04]),
+      intercept: (value) => value.first == 0x0F,
+      handle: (value) => utf8.decode(
+        value.sublist(1),
+      ),
+    );
+    return await notepadType.executeCommand(command);
+  }
+
+  @override
+  Future<void> setDeviceName(String name) async {
+    final nameData = utf8.encode(name);
+    final data = nameData.length >= 15
+        ? nameData.sublist(0, 15)
+        : nameData + List.filled(15 - nameData.length, 0x00);
+    return await notepadType.executeCommand(
+      WoodemiCommand(
+        request: Uint8List.fromList([0x0B] + data),
+      ),
+    );
   }
 
   @override

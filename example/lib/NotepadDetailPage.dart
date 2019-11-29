@@ -11,6 +11,8 @@ class NotepadDetailPage extends StatefulWidget {
 }
 
 class _NotepadDetailPageState extends State<NotepadDetailPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +39,7 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text('NotepadDetailPage'),
       ),
@@ -70,8 +73,33 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> {
               ),
             ],
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getDeviceName'),
+                onPressed: () async {
+                  _toast(await _notepadClient.getDeviceName());
+                },
+              ),
+              RaisedButton(
+                child: Text('setDeviceName'),
+                onPressed: () async {
+                  await _notepadClient.setDeviceName('setDeviceName');
+                  _toast(await _notepadClient.getDeviceName());
+                },
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
+
+  _toast(String msg) => _scaffoldKey.currentState.showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          duration: Duration(seconds: 2),
+        ),
+      );
 }

@@ -18,5 +18,9 @@ abstract class NotepadClient {
 
   Future<void> completeConnection(void awaitConfirm(bool));
 
+  Future<String> getDeviceName();
+
+  Future<void> setDeviceName(String name);
+
   Future<void> setMode(NotepadMode notepadMode);
 }
