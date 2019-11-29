@@ -24,3 +24,25 @@ enum NotepadMode {
   Sync,
   Common
 }
+
+class NotePenPointer {
+  int x;
+  int y;
+  int t;
+  int p;
+
+  NotePenPointer(this.x, this.y, this.t, this.p);
+
+  NotePenPointer.fromMap(map)
+      : this.x = map['x'],
+        this.y = map['y'],
+        this.t = map['t'],
+        this.p = map['p'];
+
+  Map toMap() => {
+    'x': x,
+    'y': y,
+    't': t,
+    'p': p,
+  };
+}
