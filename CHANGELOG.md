@@ -1,3 +1,8 @@
+## 0.3.0
+
+- Add `setMode` to `NotepadClient`, with `NotepadMode.Sync`
+- Add `NotepadClientCallback` with `handlePointer`
+
 ## 0.2.0
 
 ### Extract `NotepadConnector`
