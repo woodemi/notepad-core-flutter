@@ -180,5 +180,29 @@ class WoodemiClient extends NotepadClient {
       0x01 // Manufacturer Id
     ])
   );
+
+  /// Memo is kind of LargeData, transferred in data structure [ImageTransmission]
+  /// +------------------------------------------------------------+
+  /// |                          LargeData                         |
+  /// +------------------------+----------+------------------------+
+  /// | [ImageTransmission]    |   ...    |  [ImageTransmission]   |
+  /// +------------------------+----------+------------------------+
+  @override
+  Future<MemoData> importMemo(void progress(int)) async {
+    var info = await getLargeDataInfo();
+    if (info.sizeInByte <= ImageTransmission.EMPTY_LENGTH) throw Exception('No memo');
+
+    // TODO LargeData with multiple [ImageTransmission]
+    var imageTransmission = await _requestTransmission(info.sizeInByte, progress);
+    return MemoData(info, _parseMemo(imageTransmission.imageData, info.createdAt));
+  }
+
+  List<NotePenPointer> _parseMemo(Uint8List bytes, int createdAt) {
+    throw UnimplementedError();
+  }
+
+  Future<ImageTransmission> _requestTransmission(int totalSize, void progress(int)) {
+    throw UnimplementedError();
+  }
   //#endregion
 }

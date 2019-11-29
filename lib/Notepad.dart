@@ -72,3 +72,13 @@ class MemoInfo {
   @override
   String toString() => '$sizeInByte, $createdAt, $partIndex, $restCount';
 }
+
+class MemoData {
+  final MemoInfo memoInfo;
+  final List<NotePenPointer> pointers;
+
+  MemoData(this.memoInfo, this.pointers);
+
+  @override
+  String toString() => '$memoInfo, pointers[${pointers.length}]';
+}
