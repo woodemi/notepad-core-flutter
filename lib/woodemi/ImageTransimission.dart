@@ -5,4 +5,6 @@ class ImageTransmission {
   static const EMPTY_LENGTH = HEADER_LENGTH + 6 /*empty imageTagValue*/ + 8 /*crcTagValue*/;
 
   Uint8List imageData;
+
+  ImageTransmission(Uint8List data);
 }

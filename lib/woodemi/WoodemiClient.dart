@@ -201,7 +201,31 @@ class WoodemiClient extends NotepadClient {
     throw UnimplementedError();
   }
 
-  Future<ImageTransmission> _requestTransmission(int totalSize, void progress(int)) {
+  /// +---------------------------------+
+  /// |       [ImageTransmission]       |
+  /// +----------+-----------+----------+
+  /// |  block   |    ...    |   block  |
+  /// +----------+-----------+----------+
+  Future<ImageTransmission> _requestTransmission(int totalSize, void progress(int)) async {
+    var data = Uint8List.fromList([]);
+    while (data.length < totalSize) {
+      var currentPos = data.length;
+      var blockOffset = 0;
+      Map<int, Uint8List> blockChunkMap = await _requestForNextBlock(currentPos, totalSize).fold(Map<int, Uint8List>(), (acc, value) {
+        blockOffset += value.item2.length;
+        progress((currentPos + blockOffset) * 100 ~/ totalSize);
+        acc[value.item1] = value.item2;
+        return acc;
+      });
+      var sortedKeys = blockChunkMap.keys.toList()..sort();
+      var block = sortedKeys.map((k) => blockChunkMap[k]).reduce((acc, bytes) => Uint8List.fromList(acc + bytes));
+      print('receiveBlock size(${block.length})');
+      data = Uint8List.fromList(data + block);
+    }
+    return ImageTransmission(data);
+  }
+
+  Stream<Tuple2<int, Uint8List>> _requestForNextBlock(int currentPos, int totalSize) {
     throw UnimplementedError();
   }
   //#endregion
