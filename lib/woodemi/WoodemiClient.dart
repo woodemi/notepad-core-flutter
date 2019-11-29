@@ -104,4 +104,24 @@ class WoodemiClient extends NotepadClient {
     }).toList();
   }
   //#endregion
+
+  //#region ImportMemo
+  @override
+  Future<MemoSummary> getMemoSummary() {
+    var handle = (Uint8List value) {
+      var byteData = value.buffer.asByteData();
+      var position = 0;
+      var totalCapacity = byteData.getUint32(position += 1, Endian.little); // skip 1
+      var freeCapacity = byteData.getUint32(position += 4, Endian.little);
+      var usedCapacity = byteData.getUint32(position += 4, Endian.little);
+      var memoCount = byteData.getUint16(position += 4, Endian.little);
+      return MemoSummary(memoCount, totalCapacity, freeCapacity, usedCapacity);
+    };
+    return notepadType.executeCommand(WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x02]),
+      intercept: (value) => value.first == 0x0D,
+      handle: handle,
+    ));
+  }
+  //#endregion
 }

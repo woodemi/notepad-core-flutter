@@ -46,3 +46,15 @@ class NotePenPointer {
     'p': p,
   };
 }
+
+class MemoSummary {
+  final int memoCount;
+  final int totalCapacity;
+  final int freeCapacity;
+  final int usedCapacity;
+
+  MemoSummary(this.memoCount, this.totalCapacity, this.freeCapacity, this.usedCapacity);
+
+  @override
+  String toString() => '$memoCount, $totalCapacity, $freeCapacity, $usedCapacity';
+}

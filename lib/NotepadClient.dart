@@ -36,4 +36,8 @@ abstract class NotepadClient {
 
   List<NotePenPointer> parseSyncData(Uint8List value);
   //#endregion
+
+  //#region ImportMemo
+  Future<MemoSummary> getMemoSummary();
+  //#endregion
 }
