@@ -10,11 +10,11 @@ class NotepadDetailPage extends StatefulWidget {
   State<StatefulWidget> createState() => _NotepadDetailPageState();
 }
 
-class _NotepadDetailPageState extends State<NotepadDetailPage> {
+class _NotepadDetailPageState extends State<NotepadDetailPage> implements NotepadClientCallback {
   @override
   void initState() {
     super.initState();
-    notepadConnector.setConnectionChangeHandler(_connectionChangeHandler);
+    notepadConnector.setConnectionChangeHandler(handleConnectionChange);
   }
 
   @override
@@ -23,9 +23,23 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> {
     notepadConnector.setConnectionChangeHandler(null);
   }
 
-  final ConnectionChangeHandler _connectionChangeHandler = (NotepadClient client, String state) {
-    print('ConnectionChangeHandler $client $state');
-  };
+  NotepadClient _notepadClient;
+
+  void handleConnectionChange(NotepadClient client, String state) {
+    print('handleConnectionChange $client $state');
+    if (state == 'Connected') {
+      _notepadClient = client;
+      _notepadClient.callback = this;
+    } else {
+      _notepadClient?.callback = null;
+      _notepadClient = null;
+    }
+  }
+
+  @override
+  void handlePointer(List<NotePenPointer> list) {
+    print('handlePointer ${list.length}');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +50,7 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> {
       body: Column(
         children: <Widget>[
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               RaisedButton(
                 child: Text('connect'),
@@ -47,6 +62,17 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> {
                 child: Text('disconnect'),
                 onPressed: () {
                   notepadConnector.disconnect();
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('setMode'),
+                onPressed: () {
+                  _notepadClient.setMode(NotepadMode.Sync);
                 },
               ),
             ],

@@ -9,6 +9,8 @@ typedef ConnectionChangeHandler = void Function(NotepadClient client, String sta
 final notepadConnector = NotepadConnector._();
 
 class NotepadConnector {
+  final tag = 'NotepadConnector';
+
   NotepadConnector._() {
     message.setMessageHandler(_handleMessage);
   }
@@ -39,6 +41,8 @@ class NotepadConnector {
     method.invokeMethod('connect', {
       'deviceId': scanResult.deviceId,
     }).then((_) => print('connect invokeMethod success'));
+    if (_connectionChangeHandler != null)
+      _connectionChangeHandler(_notepadClient, 'Connecting');
   }
 
   void disconnect() {
@@ -55,21 +59,31 @@ class NotepadConnector {
   }
 
   Future<dynamic> _handleMessage(dynamic message) async {
-    print('handleMessage $message');
+    print('$tag handleMessage $message');
     if (message['ConnectionState'] != null) {
       if (message['ConnectionState'] == 'Connected')
         method.invokeMethod('discoverServices').then((_) =>
             print('discoverServices invokeMethod success'));
       else
-        _connectionChangeHandler(_notepadClient, message['ConnectionState']);
+        if (_connectionChangeHandler != null) _connectionChangeHandler(_notepadClient, message['ConnectionState']);
     } else if (message['ServiceState'] != null) {
       if (message['ServiceState'] == 'Discovered')
         _onServicesDiscovered();
     }
   }
 
-  void _onServicesDiscovered() {
-    _notepadType.configCharacteristics();
-    _notepadClient.completeConnection();
+  void _onServicesDiscovered() async {
+    try {
+      await _notepadType.configCharacteristics();
+      await _notepadClient.completeConnection((awaitConfrim) {
+        if (_connectionChangeHandler != null)
+          _connectionChangeHandler(_notepadClient, 'AwaitConfirm');
+      });
+      if (_connectionChangeHandler != null)
+        _connectionChangeHandler(_notepadClient, 'Connected');
+    } on AccessException {
+      if (_connectionChangeHandler != null)
+        _connectionChangeHandler(_notepadClient, 'Disconnected');
+    }
   }
 }

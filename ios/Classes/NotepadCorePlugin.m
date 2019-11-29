@@ -34,25 +34,26 @@
 @property(nonatomic, strong) dispatch_group_t serviceConfigGroup;
 
 @property(nonatomic, strong) FlutterBasicMessageChannel *messageChannel;
+@property(nonatomic, strong) FlutterBasicMessageChannel *clientMessage;
 @property(nonatomic, strong) FlutterEventSink scanResultSink;
 
 @end
 
 @implementation NotepadCorePlugin
 + (void)registerWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar {
-    FlutterBasicMessageChannel *messageChannel = [FlutterBasicMessageChannel messageChannelWithName:@"notepad_core/message" binaryMessenger:[registrar messenger]];
-    NotepadCorePlugin *notepadCorePlugin = [[NotepadCorePlugin alloc] initWithMessageChannel:messageChannel];
-
+    NotepadCorePlugin *notepadCorePlugin = [[NotepadCorePlugin alloc] initWithRegistrar:registrar];
     FlutterMethodChannel *methodChannel = [FlutterMethodChannel methodChannelWithName:@"notepad_core/method" binaryMessenger:[registrar messenger]];
     [registrar addMethodCallDelegate:notepadCorePlugin channel:methodChannel];
     [[FlutterEventChannel eventChannelWithName:@"notepad_core/event.scanResult" binaryMessenger:[registrar messenger]] setStreamHandler:notepadCorePlugin];
 }
 
-- (instancetype)initWithMessageChannel:(FlutterBasicMessageChannel *)messageChannel {
+- (instancetype)initWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar {
     if (self = [super init]) {
         _manager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
         _discoveredPeripherals = [[NSMutableDictionary alloc] init];
-        _messageChannel = messageChannel;
+        _messageChannel = [FlutterBasicMessageChannel messageChannelWithName:@"notepad_core/message" binaryMessenger:[registrar messenger]];
+        _clientMessage = [FlutterBasicMessageChannel messageChannelWithName:@"notepad_core/message.client"
+                                                            binaryMessenger:[registrar messenger]];
     }
     return self;
 }
@@ -171,10 +172,20 @@
 
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(nullable NSError *)error {
     NSLog(@"peripheral:didUpdateNotificationStateFor %@ %d", characteristic.UUID, characteristic.isNotifying);
+    [_clientMessage sendMessage:@{@"characteristicConfig": characteristic.UUID.UUIDString}];
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(nullable NSError *)error {
     NSLog(@"peripheral:didWriteValueForCharacteristic %@ %@ error: %@", characteristic.UUID.UUIDString, characteristic.value, error);
+}
+
+- (void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(nullable NSError *)error {
+    NSLog(@"peripheral:didUpdateValueForCharacteristic %@ %@ error: %@", characteristic.UUID.UUIDString, characteristic.value, error);
+    NSDictionary *characteristicValue = @{
+            @"characteristic": characteristic.UUID.UUIDString,
+            @"value": [FlutterStandardTypedData typedDataWithBytes:characteristic.value],
+    };
+    [_clientMessage sendMessage:@{@"characteristicValue": characteristicValue}];
 }
 
 @end

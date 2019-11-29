@@ -18,17 +18,22 @@ import java.util.*
 
 private const val TAG = "NotepadCorePlugin"
 
-class NotepadCorePlugin(private val context: Context, val messageChannel: BasicMessageChannel<Any>) : MethodCallHandler, EventChannel.StreamHandler {
+class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.StreamHandler {
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
-            val basicMessageChannel = BasicMessageChannel(registrar.messenger(), "notepad_core/message", StandardMessageCodec.INSTANCE)
-            val notepadCorePlugin = NotepadCorePlugin(registrar.context(), basicMessageChannel)
-
+            val notepadCorePlugin = NotepadCorePlugin(registrar)
             MethodChannel(registrar.messenger(), "notepad_core/method").setMethodCallHandler(notepadCorePlugin)
             EventChannel(registrar.messenger(), "notepad_core/event.scanResult").setStreamHandler(notepadCorePlugin)
         }
     }
+
+    private val context = registrar.context()
+
+    private val messageChannel = BasicMessageChannel(registrar.messenger(), "notepad_core/message", StandardMessageCodec.INSTANCE)
+
+    private val clientMessage = BasicMessageChannel(registrar.messenger(),
+            "notepad_core/message.client", StandardMessageCodec.INSTANCE)
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         Log.d(TAG, "onMethodCall " + call.method)
@@ -151,11 +156,22 @@ class NotepadCorePlugin(private val context: Context, val messageChannel: BasicM
         override fun onDescriptorWrite(gatt: BluetoothGatt?, descriptor: BluetoothGattDescriptor, status: Int) {
             if (gatt != connectGatt) return
             Log.v(TAG, "onDescriptorWrite ${descriptor.uuid}, ${descriptor.characteristic.uuid}, $status")
+            mainThreadHandler.post { clientMessage.send(mapOf("characteristicConfig" to descriptor.characteristic.uuid.uuidString)) }
         }
 
         override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic, status: Int) {
             if (gatt != connectGatt) return
             Log.v(TAG, "onCharacteristicWrite ${characteristic.uuid}, ${characteristic.value.contentToString()} $status")
+        }
+
+        override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic) {
+            if (gatt != connectGatt) return
+            Log.v(TAG, "onCharacteristicChanged ${characteristic.uuid}, ${characteristic.value.contentToString()}")
+            val characteristicValue = mapOf(
+                    "characteristic" to characteristic.uuid.uuidString,
+                    "value" to characteristic.value
+            )
+            mainThreadHandler.post { clientMessage.send(mapOf("characteristicValue" to characteristicValue)) }
         }
     }
 }
@@ -171,6 +187,9 @@ val ScanResult.manufacturerData: ByteArray?
 fun Short.toByteArray(byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN): ByteArray =
         ByteBuffer.allocate(2 /*Short.SIZE_BYTES*/).order(byteOrder).putShort(this).array()
 
+val UUID.uuidString
+    get() = this.toString().toUpperCase()
+
 fun BluetoothGatt.getCharacteristic(serviceCharacteristic: Pair<String, String>) =
         getService(UUID.fromString(serviceCharacteristic.first)).getCharacteristic(UUID.fromString(serviceCharacteristic.second))
 
@@ -179,6 +198,7 @@ private val DESC__CLIENT_CHAR_CONFIGURATION = UUID.fromString("00002902-0000-100
 fun BluetoothGatt.setNotifiable(serviceCharacteristic: Pair<String, String>, bleInputProperty: String) {
     val descriptor = getCharacteristic(serviceCharacteristic).getDescriptor(DESC__CLIENT_CHAR_CONFIGURATION)
     val (value, enable) = when (bleInputProperty) {
+        "notification" -> BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE to true
         "indication" -> BluetoothGattDescriptor.ENABLE_INDICATION_VALUE to true
         else -> BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE to false
     }

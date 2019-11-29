@@ -16,14 +16,15 @@ class NotepadType {
     _notepadClient.notepadType = this;
   }
 
-  void configCharacteristics() {
-    for (var serviceCharacteristic in _notepadClient.inputIndicationCharacteristics)
-      configInputCharacteristic(serviceCharacteristic, BleInputProperty.indication);
-  }
-
-  void configInputCharacteristic(Tuple2<String, String> serviceCharacteristic, BleInputProperty inputProperty) {
-    print('configInputCharacteristic $serviceCharacteristic, $inputProperty');
-    _bleType.setNotifiable(serviceCharacteristic, inputProperty);
+  Future<void> configCharacteristics() async {
+    for (var serviceCharacteristic in _notepadClient.inputIndicationCharacteristics) {
+      print('configInputCharacteristic $serviceCharacteristic, indication');
+      await _bleType.setNotifiable(serviceCharacteristic, BleInputProperty.indication);
+    }
+    for (var serviceCharacteristic in _notepadClient.inputNotificationCharacteristics) {
+      print('configInputCharacteristic $serviceCharacteristic, notification');
+      await _bleType.setNotifiable(serviceCharacteristic, BleInputProperty.notification);
+    }
   }
 
   void sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request) async {
@@ -31,9 +32,11 @@ class NotepadType {
     print('on${messageHead}Send: ${hex.encode(request)}');
   }
 
-  Future<Uint8List> receiveResponseAsync(String messageHead, Tuple2<String, String> commandResponseCharacteristic, Predicate intercept) async {
-    // TODO
-    var response = Uint8List.fromList([0, 0]);
+  Stream<Uint8List> receiveValue(Tuple2<String, String> serviceCharacteristic) =>
+      _bleType.inputValueStream.where((cv) => cv.item1 == serviceCharacteristic.item2).map((cv) => cv.item2);
+
+  Future<Uint8List> receiveResponseAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Predicate intercept) async {
+    var response = await receiveValue(serviceCharacteristic).firstWhere(intercept);
     print('on${messageHead}Receive: ${hex.encode(response)}');
     return response;
   }
@@ -43,4 +46,9 @@ class NotepadType {
     var response = await receiveResponseAsync('Command', _notepadClient.commandResponseCharacteristic, command.intercept);
     return command.handle(response);
   }
+
+  Stream<Uint8List> receiveSyncInput() => receiveValue(_notepadClient.syncInputCharacteristic).map((value) {
+    print('onSyncInputReceive ${hex.encode(value)}');
+    return value;
+  });
 }
