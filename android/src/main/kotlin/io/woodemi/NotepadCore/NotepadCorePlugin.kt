@@ -198,6 +198,7 @@ private val DESC__CLIENT_CHAR_CONFIGURATION = UUID.fromString("00002902-0000-100
 fun BluetoothGatt.setNotifiable(serviceCharacteristic: Pair<String, String>, bleInputProperty: String) {
     val descriptor = getCharacteristic(serviceCharacteristic).getDescriptor(DESC__CLIENT_CHAR_CONFIGURATION)
     val (value, enable) = when (bleInputProperty) {
+        "notification" -> BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE to true
         "indication" -> BluetoothGattDescriptor.ENABLE_INDICATION_VALUE to true
         else -> BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE to false
     }

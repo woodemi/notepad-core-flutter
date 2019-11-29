@@ -7,6 +7,7 @@ import 'notepad_core_native.dart';
 
 class BleInputProperty {
   static final disabled = BleInputProperty._('disabled');
+  static final notification = BleInputProperty._('notification');
   static final indication = BleInputProperty._('indication');
 
   final String value;
@@ -22,7 +23,7 @@ class BleType {
   }
 
   // FIXME Close
-  final _characteristicConfigController = StreamController<String>();
+  final _characteristicConfigController = StreamController<String>.broadcast();
 
   Future<void> setNotifiable(Tuple2<String, String> serviceCharacteristic, BleInputProperty bleInputProperty) async {
     method.invokeMethod('setNotifiable', {

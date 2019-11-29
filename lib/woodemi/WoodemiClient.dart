@@ -13,6 +13,9 @@ const SERV__COMMAND = '57444D01-$SUFFIX';
 const CHAR__COMMAND_REQUEST = '57444E02-$SUFFIX';
 const CHAR__COMMAND_RESPONSE = CHAR__COMMAND_REQUEST;
 
+const SERV__SYNC = '57444D06-$SUFFIX';
+const CHAR__SYNC_INPUT = '57444D07-$SUFFIX';
+
 const WOODEMI_PREFIX = [0x57, 0x44, 0x4d]; // 'WDM'
 
 final defaultAuthToken = Uint8List.fromList([0x00, 0x00, 0x00, 0x01]);
@@ -32,8 +35,16 @@ class WoodemiClient extends NotepadClient {
   Tuple2<String, String> get commandResponseCharacteristic => const Tuple2(SERV__COMMAND, CHAR__COMMAND_RESPONSE);
 
   @override
+  Tuple2<String, String> get syncInputCharacteristic => const Tuple2(SERV__SYNC, CHAR__SYNC_INPUT);
+
+  @override
   List<Tuple2<String, String>> get inputIndicationCharacteristics => [
     commandResponseCharacteristic,
+  ];
+
+  @override
+  List<Tuple2<String, String>> get inputNotificationCharacteristics => [
+    syncInputCharacteristic
   ];
 
   @override
