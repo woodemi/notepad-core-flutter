@@ -18,7 +18,7 @@ class BleType {
   final tag = 'BleType';
 
   BleType() {
-    characteristicConfig.setMessageHandler(handleMessage);
+    message_client.setMessageHandler(handleMessage);
   }
 
   // FIXME Close
@@ -43,8 +43,17 @@ class BleType {
     }).then((_) => print('writeValue invokeMethod success'));
   }
 
+  // FIXME Close
+  final _characteristicValueController = StreamController<Tuple2<String, Uint8List>>.broadcast();
+  Stream<Tuple2<String, Uint8List>> get inputValueStream => _characteristicValueController.stream;
+
   Future<dynamic> handleMessage(dynamic message) {
     print('$tag handleMessage $message');
-    _characteristicConfigController.add(message);
+    if (message['characteristicConfig'] != null) {
+      _characteristicConfigController.add(message['characteristicConfig']);
+    } else if (message['characteristicValue'] != null) {
+      var characteristicValue = message['characteristicValue'];
+      _characteristicValueController.add(Tuple2(characteristicValue['characteristic'], characteristicValue['value']));
+    }
   }
 }

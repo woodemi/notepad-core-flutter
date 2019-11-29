@@ -32,8 +32,8 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
 
     private val messageChannel = BasicMessageChannel(registrar.messenger(), "notepad_core/message", StandardMessageCodec.INSTANCE)
 
-    private val characteristicConfigChannel = BasicMessageChannel(registrar.messenger(),
-            "notepad_core/message.characteristicConfig", StandardMessageCodec.INSTANCE)
+    private val clientMessage = BasicMessageChannel(registrar.messenger(),
+            "notepad_core/message.client", StandardMessageCodec.INSTANCE)
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         Log.d(TAG, "onMethodCall " + call.method)
@@ -156,12 +156,22 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
         override fun onDescriptorWrite(gatt: BluetoothGatt?, descriptor: BluetoothGattDescriptor, status: Int) {
             if (gatt != connectGatt) return
             Log.v(TAG, "onDescriptorWrite ${descriptor.uuid}, ${descriptor.characteristic.uuid}, $status")
-            mainThreadHandler.post { characteristicConfigChannel.send(descriptor.characteristic.uuid.uuidString) }
+            mainThreadHandler.post { clientMessage.send(mapOf("characteristicConfig" to descriptor.characteristic.uuid.uuidString)) }
         }
 
         override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic, status: Int) {
             if (gatt != connectGatt) return
             Log.v(TAG, "onCharacteristicWrite ${characteristic.uuid}, ${characteristic.value.contentToString()} $status")
+        }
+
+        override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic) {
+            if (gatt != connectGatt) return
+            Log.v(TAG, "onCharacteristicChanged ${characteristic.uuid}, ${characteristic.value.contentToString()}")
+            val characteristicValue = mapOf(
+                    "characteristic" to characteristic.uuid.uuidString,
+                    "value" to characteristic.value
+            )
+            mainThreadHandler.post { clientMessage.send(mapOf("characteristicValue" to characteristicValue)) }
         }
     }
 }
