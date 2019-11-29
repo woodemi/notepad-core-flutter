@@ -1,5 +1,6 @@
 import 'package:tuple/tuple.dart';
 
+import 'Notepad.dart';
 import 'NotepadType.dart';
 
 abstract class NotepadClient {
@@ -12,4 +13,6 @@ abstract class NotepadClient {
   NotepadType notepadType;
 
   Future<void> completeConnection(void awaitConfirm(bool));
+
+  Future<void> setMode(NotepadMode notepadMode);
 }

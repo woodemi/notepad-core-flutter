@@ -19,3 +19,8 @@ class NotepadScanResult {
         'rssi': rssi,
       };
 }
+
+enum NotepadMode {
+  Sync,
+  Common
+}
