@@ -21,6 +21,7 @@ const CHAR__SYNC_INPUT = '57444D07-$SUFFIX';
 const SERV__FILE_INPUT = '57444D03-$SUFFIX';
 const CHAR__FILE_INPUT_CONTROL_REQUEST = '57444D04-$SUFFIX';
 const CHAR__FILE_INPUT_CONTROL_RESPONSE = CHAR__FILE_INPUT_CONTROL_REQUEST;
+const CHAR__FILE_INPUT = '57444D05-$SUFFIX';
 
 const WOODEMI_PREFIX = [0x57, 0x44, 0x4d]; // 'WDM'
 
@@ -55,6 +56,9 @@ class WoodemiClient extends NotepadClient {
   Tuple2<String, String> get fileInputControlResponseCharacteristic => const Tuple2(SERV__FILE_INPUT, CHAR__FILE_INPUT_CONTROL_RESPONSE);
 
   @override
+  Tuple2<String, String> get fileInputCharacteristic => const Tuple2(SERV__FILE_INPUT, CHAR__FILE_INPUT);
+
+  @override
   List<Tuple2<String, String>> get inputIndicationCharacteristics => [
     commandResponseCharacteristic,
     fileInputControlResponseCharacteristic,
@@ -62,7 +66,8 @@ class WoodemiClient extends NotepadClient {
 
   @override
   List<Tuple2<String, String>> get inputNotificationCharacteristics => [
-    syncInputCharacteristic
+    syncInputCharacteristic,
+    fileInputCharacteristic,
   ];
 
   @override
@@ -268,15 +273,24 @@ class WoodemiClient extends NotepadClient {
     var request = Uint8List.fromList([0x04] + byteData.buffer.asUint8List());
 
     var chunkCountCeil = (blockSize / maxChunkSize).ceil();
-    var indexedChunkStream = receiveChunks(chunkCountCeil);
+    var indexedChunkStream = _receiveChunks(chunkCountCeil);
 
     notepadType.sendRequestAsync('FileInputControl', fileInputControlRequestCharacteristic, request);
 
     return indexedChunkStream;
   }
 
-  Stream<Tuple2<int, Uint8List>> receiveChunks(int count) {
-    throw UnimplementedError();
-  }
+  /// +-------------+--------------------------+
+  /// | responseTag |       responseData       |
+  /// +-------------+-------------+------------+
+  /// |             |  chunkSeqId |  chunkData |
+  /// |             |             |            |
+  /// | 1 byte      |  1 byte     |  ...       |
+  /// +-------------+-------------+------------+
+  Stream<Tuple2<int, Uint8List>> _receiveChunks(int count) => notepadType.receiveFileInput()
+    .where((value) => value.first == 0x05)
+    // TODO Take with timeout
+    .take(count)
+    .map((value) => Tuple2(value[1], value.sublist(2)));
   //#endregion
 }

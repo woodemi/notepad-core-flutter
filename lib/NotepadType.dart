@@ -65,4 +65,9 @@ class NotepadType {
     var response = await receiveResponseAsync('FileInputControl', _notepadClient.fileInputControlResponseCharacteristic, command.intercept);
     return command.handle(response);
   }
+
+  Stream<Uint8List> receiveFileInput() => receiveValue(_notepadClient.fileInputCharacteristic).map((value) {
+    print('onFileInputReceive: ${hex.encode(value)}');
+    return value;
+  });
 }
