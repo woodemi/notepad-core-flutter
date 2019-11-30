@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:notepad_core/notepad_core.dart';
+import 'package:tf_toast/Toast.dart';
 
 class NotepadDetailPage extends StatefulWidget {
   final NotepadScanResult scanResult;
@@ -62,6 +63,33 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
                 child: Text('disconnect'),
                 onPressed: () {
                   notepadConnector.disconnect();
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('claimAuth'),
+                onPressed: () async {
+                  if (_notepadClient != null) {
+                    await _notepadClient.claimAuth();
+                    Toast.show(context, title: 'claimAuth success');
+                  } else {
+                    Toast.show(context, title: '_notepadClient = null');
+                  }
+                },
+              ),
+              RaisedButton(
+                child: Text('disclaimAuth'),
+                onPressed: () async {
+                  if (_notepadClient != null) {
+                    await _notepadClient.disclaimAuth();
+                    Toast.show(context, title: 'disclaimAuth success');
+                  } else {
+                    Toast.show(context, title: '_notepadClient = null');
+                  }
                 },
               ),
             ],

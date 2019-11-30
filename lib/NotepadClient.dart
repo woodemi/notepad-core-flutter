@@ -37,6 +37,20 @@ abstract class NotepadClient {
 
   NotepadClientCallback callback;
 
+  //#region authorization
+  Uint8List _authToken;
+
+  Uint8List get authToken => _authToken;
+
+  void setAuthToken(Uint8List authToken) {
+    _authToken = authToken;
+  }
+
+  Future<void> claimAuth();
+
+  Future<void> disclaimAuth();
+  //#endregion
+
   //#region SyncInput
   Future<void> setMode(NotepadMode notepadMode);
 
