@@ -7,6 +7,8 @@ import 'NotepadClient.dart';
 import 'native/BleType.dart';
 import 'src/NotepadCommand.dart';
 
+const GATT_HEADER_LENGTH = 3;
+
 class NotepadType {
   final NotepadClient _notepadClient;
 
@@ -25,6 +27,12 @@ class NotepadType {
       print('configInputCharacteristic $serviceCharacteristic, notification');
       await _bleType.setNotifiable(serviceCharacteristic, BleInputProperty.notification);
     }
+  }
+
+  int mtu;
+
+  Future<void> configMtu(int expectedMtu) async {
+    mtu = await _bleType.requestMtu(expectedMtu) - GATT_HEADER_LENGTH;
   }
 
   void sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request) async {
@@ -49,6 +57,17 @@ class NotepadType {
 
   Stream<Uint8List> receiveSyncInput() => receiveValue(_notepadClient.syncInputCharacteristic).map((value) {
     print('onSyncInputReceive ${hex.encode(value)}');
+    return value;
+  });
+
+  Future<T> executeFileInputControl<T>(NotepadCommand<T> command) async {
+    await sendRequestAsync('FileInputControl', _notepadClient.fileInputControlRequestCharacteristic, command.request);
+    var response = await receiveResponseAsync('FileInputControl', _notepadClient.fileInputControlResponseCharacteristic, command.intercept);
+    return command.handle(response);
+  }
+
+  Stream<Uint8List> receiveFileInput() => receiveValue(_notepadClient.fileInputCharacteristic).map((value) {
+    print('onFileInputReceive: ${hex.encode(value)}');
     return value;
   });
 }

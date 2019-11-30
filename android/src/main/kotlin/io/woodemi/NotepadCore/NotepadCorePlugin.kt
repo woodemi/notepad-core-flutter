@@ -69,6 +69,10 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
                 connectGatt?.setNotifiable(service to characteristic, bleInputProperty)
                 result.success(null)
             }
+            "requestMtu" -> {
+                connectGatt?.requestMtu(call.argument<Int>("expectedMtu")!!)
+                result.success(null)
+            }
             "writeValue" -> {
                 val service = call.argument<String>("service")!!
                 val characteristic = call.argument<String>("characteristic")!!
@@ -151,6 +155,12 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
             }
 
             mainThreadHandler.post { messageChannel.send(mapOf("ServiceState" to "Discovered")) }
+        }
+
+        override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
+            if (gatt != connectGatt || status != BluetoothGatt.GATT_SUCCESS) return
+            Log.v(TAG, "onMtuChanged $mtu")
+            mainThreadHandler.post { clientMessage.send(mapOf("mtuConfig" to mtu)) }
         }
 
         override fun onDescriptorWrite(gatt: BluetoothGatt?, descriptor: BluetoothGattDescriptor, status: Int) {

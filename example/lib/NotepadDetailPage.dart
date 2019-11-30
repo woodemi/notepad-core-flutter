@@ -101,6 +101,27 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
             },
           ),
           NotepadMethod(
+            name: 'getMemoSummary',
+            call: () async {
+              var memoSummary = await _notepadClient.getMemoSummary();
+              print('getMemoSummary $memoSummary');
+            },
+          ),
+          NotepadMethod(
+            name: 'getMemoInfo',
+            call: () async {
+              var memoInfo = await _notepadClient.getMemoInfo();
+              print('getMemoInfo $memoInfo');
+            },
+          ),
+          NotepadMethod(
+            name: 'importMemo',
+            call: () async {
+              var memoData = await _notepadClient.importMemo((progress) => print('progress $progress'));
+              print('importMemo $memoData');
+            },
+          ),
+          NotepadMethod(
             name: 'setMode',
             call: () => _notepadClient.setMode(NotepadMode.Sync),
           ),
