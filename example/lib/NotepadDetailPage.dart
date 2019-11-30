@@ -77,6 +77,37 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
               ),
             ],
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getMemoSummary'),
+                onPressed: () async {
+                  var memoSummary = await _notepadClient.getMemoSummary();
+                  print('getMemoSummary $memoSummary');
+                },
+              ),
+              RaisedButton(
+                child: Text('getMemoInfo'),
+                onPressed: () async {
+                  var memoInfo = await _notepadClient.getMemoInfo();
+                  print('getMemoInfo $memoInfo');
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('importMemo'),
+                onPressed: () async {
+                  var memoData = await _notepadClient.importMemo((progress) => print('progress $progress'));
+                  print('importMemo $memoData');
+                },
+              ),
+            ],
+          ),
         ],
       ),
     );

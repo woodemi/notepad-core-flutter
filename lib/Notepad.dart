@@ -46,3 +46,39 @@ class NotePenPointer {
     'p': p,
   };
 }
+
+class MemoSummary {
+  final int memoCount;
+  final int totalCapacity;
+  final int freeCapacity;
+  final int usedCapacity;
+
+  MemoSummary(this.memoCount, this.totalCapacity, this.freeCapacity, this.usedCapacity);
+
+  @override
+  String toString() => '$memoCount, $totalCapacity, $freeCapacity, $usedCapacity';
+}
+
+class MemoInfo {
+  final int sizeInByte;
+  // milliseconds
+  final int createdAt;
+  final int partIndex;
+  // Rest part count in current transportation
+  final int restCount;
+
+  MemoInfo(this.sizeInByte, this.createdAt, this.partIndex, this.restCount);
+
+  @override
+  String toString() => '$sizeInByte, $createdAt, $partIndex, $restCount';
+}
+
+class MemoData {
+  final MemoInfo memoInfo;
+  final List<NotePenPointer> pointers;
+
+  MemoData(this.memoInfo, this.pointers);
+
+  @override
+  String toString() => '$memoInfo, pointers[${pointers.length}]';
+}

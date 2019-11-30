@@ -16,6 +16,12 @@ abstract class NotepadClient {
 
   Tuple2<String, String> get syncInputCharacteristic;
 
+  Tuple2<String, String> get fileInputControlRequestCharacteristic;
+
+  Tuple2<String, String> get fileInputControlResponseCharacteristic;
+
+  Tuple2<String, String> get fileInputCharacteristic;
+
   List<Tuple2<String, String>> get inputIndicationCharacteristics;
 
   List<Tuple2<String, String>> get inputNotificationCharacteristics;
@@ -35,5 +41,13 @@ abstract class NotepadClient {
   Future<void> setMode(NotepadMode notepadMode);
 
   List<NotePenPointer> parseSyncData(Uint8List value);
+  //#endregion
+
+  //#region ImportMemo
+  Future<MemoSummary> getMemoSummary();
+
+  Future<MemoInfo> getMemoInfo();
+
+  Future<MemoData> importMemo(void progress(int));
   //#endregion
 }

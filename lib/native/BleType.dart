@@ -35,6 +35,15 @@ class BleType {
     await _characteristicConfigController.stream.any((c) => c == serviceCharacteristic.item2);
   }
 
+  // FIXME Close
+  final _mtuConfigController = StreamController<int>.broadcast();
+
+  Future<int> requestMtu(int expectedMtu) async {
+    method.invokeMethod('requestMtu', {
+      'expectedMtu': expectedMtu,
+    }).then((_) => print('requestMtu invokeMethod success'));
+    return await _mtuConfigController.stream.first;
+  }
 
   void writeValue(Tuple2<String, String> serviceCharacteristic, Uint8List value) {
     method.invokeMethod('writeValue', {
@@ -54,7 +63,10 @@ class BleType {
       _characteristicConfigController.add(message['characteristicConfig']);
     } else if (message['characteristicValue'] != null) {
       var characteristicValue = message['characteristicValue'];
-      _characteristicValueController.add(Tuple2(characteristicValue['characteristic'], characteristicValue['value']));
+      var value = Uint8List.fromList(characteristicValue['value']); // In case of _Uint8ArrayView
+      _characteristicValueController.add(Tuple2(characteristicValue['characteristic'], value));
+    } else if (message['mtuConfig'] != null) {
+      _mtuConfigController.add(message['mtuConfig']);
     }
   }
 }
