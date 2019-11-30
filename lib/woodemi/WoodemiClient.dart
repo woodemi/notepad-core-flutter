@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:notepad_core/Common.dart';
@@ -228,7 +229,53 @@ class WoodemiClient extends NotepadClient {
     return ImageTransmission(data);
   }
 
+  /// Request in file input control pipe
+  /// +------------+--------------------------------------------------------------------------------------------+
+  /// | requestTag |                                     requestData                                            |
+  /// +------------+----------+-------------+------------+---------------+-----------------+--------------------+
+  /// |            |  imageId |  currentPos |  BlockSize |  maxChunkSize |  transferMethod |  l2capChannelOrPsm |
+  /// |            |          |             |            |               |                 |                    |
+  /// | 1 byte     |  2 bytes |  4 bytes    |  4 bytes   |  2bytes       |  1 byte         |  2 bytes           |
+  /// +------------+----------+-------------+------------+---------------+-----------------+--------------------+
+  ///
+  /// [maxChunkSize] not larger than (0xFFFF + 1)
+  ///
+  /// Response in file input data pipe
+  /// +--------------------------------+
+  /// |             block              |
+  /// +----------+----------+----------+
+  /// | chunk    |   ...    |  chunk   |
+  /// +----------+----------+----------+
   Stream<Tuple2<int, Uint8List>> _requestForNextBlock(int currentPos, int totalSize) {
+    var maxChunkSize = notepadType.mtu - 1 /*responseTag*/ - 1 /*chunkSeqId*/;
+    var maxBlockSize = maxChunkSize * (0xFF + 1); // chunkSeqId(1 byte) -> maxChunkPerBlock
+    var blockSize = min(totalSize - currentPos, maxBlockSize);
+    var transferMethod = 0;
+    var l2capChannelOrPsm = 0x0004;
+
+    print('requestForNextBlock currentPos $currentPos, totalSize $totalSize, blockSize, $blockSize, maxChunkSize $maxChunkSize');
+
+    var imageId = fileInfo.item1;
+    var byteData = ByteData(imageId.length + 4 + 4 + 2 + 1 + 2);
+    var position = 0;
+    for (var b in imageId)
+      byteData.setInt8(position++, b);
+    byteData.setUint32(position += imageId.length, currentPos, Endian.little);
+    byteData.setUint32(position += 4, blockSize, Endian.little);
+    byteData.setUint16(position += 4, maxChunkSize, Endian.little);
+    byteData.setUint8(position += 2, transferMethod);
+    byteData.setUint16(position += 1, l2capChannelOrPsm, Endian.little);
+    var request = Uint8List.fromList([0x04] + byteData.buffer.asUint8List());
+
+    var chunkCountCeil = (blockSize / maxChunkSize).ceil();
+    var indexedChunkStream = receiveChunks(chunkCountCeil);
+
+    notepadType.sendRequestAsync('FileInputControl', fileInputControlRequestCharacteristic, request);
+
+    return indexedChunkStream;
+  }
+
+  Stream<Tuple2<int, Uint8List>> receiveChunks(int count) {
     throw UnimplementedError();
   }
   //#endregion

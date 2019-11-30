@@ -7,6 +7,8 @@ import 'NotepadClient.dart';
 import 'native/BleType.dart';
 import 'src/NotepadCommand.dart';
 
+const GATT_HEADER_LENGTH = 3;
+
 class NotepadType {
   final NotepadClient _notepadClient;
 
@@ -30,7 +32,7 @@ class NotepadType {
   int mtu;
 
   Future<void> configMtu(int expectedMtu) async {
-    mtu = await _bleType.requestMtu(expectedMtu);
+    mtu = await _bleType.requestMtu(expectedMtu) - GATT_HEADER_LENGTH;
   }
 
   void sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request) async {
