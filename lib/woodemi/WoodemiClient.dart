@@ -153,8 +153,8 @@ class WoodemiClient extends NotepadClient {
   }
 
   @override
-  Future<void> setDeviceDate(int date) async {
-    final data = Uint32List.fromList([date]).buffer.asUint8List();
+  Future<void> setDeviceDate(int second) async {
+    final data = Uint32List.fromList([second]).buffer.asUint8List();
     await notepadType.executeCommand(
       WoodemiCommand(
         request: Uint8List.fromList(

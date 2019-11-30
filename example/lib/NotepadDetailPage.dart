@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:notepad_core/notepad_core.dart';
 
-class NotepadMethod {
-  String name;
-  VoidCallback call;
-
-  NotepadMethod({@required this.name, @required this.call});
-}
-
 class NotepadDetailPage extends StatefulWidget {
   final NotepadScanResult scanResult;
 
@@ -17,8 +10,8 @@ class NotepadDetailPage extends StatefulWidget {
   State<StatefulWidget> createState() => _NotepadDetailPageState();
 }
 
-class _NotepadDetailPageState extends State<NotepadDetailPage> implements NotepadClientCallback {
-  var _notepadMethods = List<NotepadMethod>();
+class _NotepadDetailPageState extends State<NotepadDetailPage>
+    implements NotepadClientCallback {
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -26,8 +19,6 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
   void initState() {
     super.initState();
     notepadConnector.setConnectionChangeHandler(handleConnectionChange);
-
-    initData();
   }
 
   @override
@@ -35,99 +26,6 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
     super.dispose();
     notepadConnector.setConnectionChangeHandler(null);
   }
-
-  initData() => {
-        _notepadMethods.addAll([
-          NotepadMethod(
-            name: 'connect',
-            call: () => notepadConnector.connect(widget.scanResult),
-          ),
-          NotepadMethod(
-            name: 'disconnect',
-            call: () => notepadConnector.disconnect(),
-          ),
-          NotepadMethod(
-            name: 'getDeviceName',
-            call: () async =>
-                _toast('DeviceName: ${await _notepadClient.getDeviceName()}'),
-          ),
-          NotepadMethod(
-            name: 'setDeviceName',
-            call: () async => {
-              await _notepadClient.setDeviceName('123'),
-              _toast('New DeviceName: ${await _notepadClient.getDeviceName()}'),
-            },
-          ),
-          NotepadMethod(
-            name: 'getVersionInfo',
-            call: () async {
-              VersionInfo version = await _notepadClient.getVersionInfo();
-              _toast(
-                  'version.hardware = ${version.hardware.major}  version.software = ${version.hardware.minor} version.software = ${version.software.major} version.software = ${version.software.minor} version.software = ${version.software.patch}');
-            },
-          ),
-          NotepadMethod(
-            name: 'getBatteryInfo',
-            call: () async {
-              BatteryInfo battery = await _notepadClient.getBatteryInfo();
-              _toast(
-                  'battery.percent = ${battery.percent}  battery.charging = ${battery.charging}');
-            },
-          ),
-          NotepadMethod(
-            name: 'getDeviceDate',
-            call: () async =>
-                _toast('date = ${await _notepadClient.getDeviceDate()}'),
-          ),
-          NotepadMethod(
-            name: 'setDeviceDate',
-            call: () async => {
-              await _notepadClient.setDeviceDate(0),
-              _toast(
-                  'new DeivceDate = ${await _notepadClient.getDeviceDate()}'),
-            },
-          ),
-          NotepadMethod(
-            name: 'getAutoLockTime',
-            call: () async => _toast(
-                'AutoLockTime = ${await _notepadClient.getAutoLockTime()}'),
-          ),
-          NotepadMethod(
-            name: 'setAutoLockTime',
-            call: () async => {
-              await _notepadClient.setAutoLockTime(10),
-              _toast(
-                  'new AutoLockTime = ${await _notepadClient.getAutoLockTime()}')
-            },
-          ),
-          NotepadMethod(
-            name: 'getMemoSummary',
-            call: () async {
-              var memoSummary = await _notepadClient.getMemoSummary();
-              print('getMemoSummary $memoSummary');
-            },
-          ),
-          NotepadMethod(
-            name: 'getMemoInfo',
-            call: () async {
-              var memoInfo = await _notepadClient.getMemoInfo();
-              print('getMemoInfo $memoInfo');
-            },
-          ),
-          NotepadMethod(
-            name: 'importMemo',
-            call: () async {
-              var memoData = await _notepadClient.importMemo((progress) => print('progress $progress'));
-              print('importMemo $memoData');
-            },
-          ),
-          NotepadMethod(
-            name: 'setMode',
-            call: () => _notepadClient.setMode(NotepadMode.Sync),
-          ),
-        ]),
-        setState(() => print),
-      };
 
   NotepadClient _notepadClient;
 
@@ -154,13 +52,156 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
       appBar: AppBar(
         title: Text('NotepadDetailPage'),
       ),
-      body: ListView.separated(
-        itemCount: _notepadMethods.length,
-        itemBuilder: (context, index) => ListTile(
-          title: Text(_notepadMethods[index].name),
-          onTap: _notepadMethods[index].call,
-        ),
-        separatorBuilder: (context, index) => Divider(),
+      body: Column(
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('connect'),
+                onPressed: () {
+                  notepadConnector.connect(widget.scanResult);
+                },
+              ),
+              RaisedButton(
+                child: Text('disconnect'),
+                onPressed: () {
+                  notepadConnector.disconnect();
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getDeviceName'),
+                onPressed: () async {
+                  _toast('DeviceName: ${await _notepadClient.getDeviceName()}');
+                },
+              ),
+              RaisedButton(
+                child: Text('setDeviceName'),
+                onPressed: () async => {
+                  await _notepadClient.setDeviceName('abc'),
+                  _toast(
+                      'New DeviceName: ${await _notepadClient.getDeviceName()}'),
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getDeviceDate'),
+                onPressed: () async {
+                  _toast('date = ${await _notepadClient.getDeviceDate()}');
+                },
+              ),
+              RaisedButton(
+                child: Text('setDeviceDate'),
+                onPressed: () async => {
+                  await _notepadClient.setDeviceDate(0), // second
+                  _toast(
+                      'new DeivceDate = ${await _notepadClient.getDeviceDate()}'),
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getAutoLockTime'),
+                onPressed: () async => _toast(
+                    'AutoLockTime = ${await _notepadClient.getAutoLockTime()}'),
+              ),
+              RaisedButton(
+                child: Text('setAutoLockTime'),
+                onPressed: () async => {
+                  await _notepadClient.setAutoLockTime(10),
+                  _toast(
+                      'new AutoLockTime = ${await _notepadClient.getAutoLockTime()}')
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getVersionInfo'),
+                onPressed: () async {
+                  VersionInfo version = await _notepadClient.getVersionInfo();
+                  _toast(
+                      'version.hardware = ${version.hardware.major}  version.software = ${version.hardware.minor} version.software = ${version.software.major} version.software = ${version.software.minor} version.software = ${version.software.patch}');
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getBatteryInfo'),
+                onPressed: () async {
+                  BatteryInfo battery = await _notepadClient.getBatteryInfo();
+                  _toast(
+                      'battery.percent = ${battery.percent}  battery.charging = ${battery.charging}');
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getMemoSummary'),
+                onPressed: () async {
+                  var memoSummary = await _notepadClient.getMemoSummary();
+                  print('getMemoSummary $memoSummary');
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getMemoInfo'),
+                onPressed: () async {
+                  var memoInfo = await _notepadClient.getMemoInfo();
+                  print('getMemoInfo $memoInfo');
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('importMemo'),
+                onPressed: () async {
+                  var memoData = await _notepadClient
+                      .importMemo((progress) => print('progress $progress'));
+                  print('importMemo $memoData');
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('setMode'),
+                onPressed: () {
+                  _notepadClient.setMode(NotepadMode.Sync);
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
