@@ -27,6 +27,12 @@ class NotepadType {
     }
   }
 
+  int mtu;
+
+  Future<void> configMtu(int expectedMtu) async {
+    mtu = await _bleType.requestMtu(expectedMtu);
+  }
+
   void sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request) async {
     _bleType.writeValue(serviceCharacteristic, request);
     print('on${messageHead}Send: ${hex.encode(request)}');
