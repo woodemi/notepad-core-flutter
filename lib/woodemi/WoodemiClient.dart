@@ -130,7 +130,7 @@ class WoodemiClient extends NotepadClient {
 
   //#endregion
 
-  //#region SyncInput
+  //#region Device Info
   @override
   Future<String> getDeviceName() async {
     final command = WoodemiCommand(
@@ -220,7 +220,9 @@ class WoodemiClient extends NotepadClient {
     );
     return await notepadType.executeCommand(command);
   }
+  //#endregion
 
+  //#region SyncInput
   @override
   Future<void> setMode(NotepadMode notepadMode) async {
     var mode = notepadMode == NotepadMode.Sync ? 0x00 : 0x01;
