@@ -112,7 +112,7 @@ class WoodemiClient extends NotepadClient {
   setAuthToken(Uint8List authToken) {
     var newAuthToken = authToken ?? defaultAuthToken;
     assert(newAuthToken.length == 4, 'authToken should be 4 in length !');
-    super.setAuthToken(authToken);
+    super.setAuthToken(newAuthToken);
   }
 
   Future<void> claimAuth() => _sendAuthRequest(authToken, true);
