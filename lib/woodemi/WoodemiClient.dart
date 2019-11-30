@@ -207,7 +207,7 @@ class WoodemiClient extends NotepadClient {
   }
 
   List<NotePenPointer> _parseMemo(Uint8List bytes, int createdAt) {
-    throw UnimplementedError();
+    return List<NotePenPointer>();
   }
 
   /// +---------------------------------+
@@ -222,7 +222,7 @@ class WoodemiClient extends NotepadClient {
       var blockOffset = 0;
       Map<int, Uint8List> blockChunkMap = await _requestForNextBlock(currentPos, totalSize).fold(Map<int, Uint8List>(), (acc, value) {
         blockOffset += value.item2.length;
-        progress((currentPos + blockOffset) * 100 ~/ totalSize);
+        if (progress != null) progress((currentPos + blockOffset) * 100 ~/ totalSize);
         acc[value.item1] = value.item2;
         return acc;
       });
@@ -265,7 +265,7 @@ class WoodemiClient extends NotepadClient {
     var position = 0;
     for (var b in imageId)
       byteData.setInt8(position++, b);
-    byteData.setUint32(position += imageId.length, currentPos, Endian.little);
+    byteData.setUint32(position, currentPos, Endian.little);
     byteData.setUint32(position += 4, blockSize, Endian.little);
     byteData.setUint16(position += 4, maxChunkSize, Endian.little);
     byteData.setUint8(position += 2, transferMethod);
