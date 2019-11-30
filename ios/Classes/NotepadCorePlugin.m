@@ -91,7 +91,7 @@ const int GATT_HEADER_LENGTH = 3;
         NSUInteger mtu = [_peripheral maximumWriteValueLengthForType:CBCharacteristicWriteWithoutResponse];
         result(nil);
         NSLog(@"peripheral.maximumWriteValueLengthForType:CBCharacteristicWriteWithoutResponse %lu", (unsigned long) mtu);
-        [_messageChannel sendMessage:@{@"mtuConfig": @(mtu + GATT_HEADER_LENGTH)}];
+        [_clientMessage sendMessage:@{@"mtuConfig": @(mtu + GATT_HEADER_LENGTH)}];
     } else if ([call.method isEqualToString:@"writeValue"]) {
         NSString *service = call.arguments[@"service"];
         NSString *characteristic = call.arguments[@"characteristic"];
