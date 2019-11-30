@@ -54,7 +54,7 @@ class WoodemiClient extends NotepadClient {
   @override
   Future<void> completeConnection(void awaitConfirm(bool)) async {
     await super.completeConnection(awaitConfirm);
-    var accessResult = await _checkAccess(defaultAuthToken, 10, awaitConfirm);
+    var accessResult = await _checkAccess(authToken ?? defaultAuthToken, 10, awaitConfirm);
     switch(accessResult) {
       case AccessResult.Denied:
         throw AccessException.Denied;
@@ -86,6 +86,28 @@ class WoodemiClient extends NotepadClient {
         throw Exception('Unknown error');
     }
   }
+
+  //#region authorization
+  setAuthToken([Uint8List authToken]) {
+    var newAuthToken = authToken != null
+        ? authToken
+        : Uint8List.fromList([0x00, 0x00, 0x00, 0x01]);
+    assert(newAuthToken.length == 4, 'authToken should be 4 in length !');
+    this.authToken = authToken;
+  }
+
+  Future<void> claimAuth() => _sendAuthRequest(authToken, true);
+
+  Future<void> disclaimAuth() => _sendAuthRequest(authToken, false);
+
+  Future<void> _sendAuthRequest(Uint8List authToken, bool claim) =>
+      notepadType.executeCommand(WoodemiCommand(
+        request: Uint8List.fromList(
+          [0x04, claim ? 0x00 : 0x01] + authToken,
+        ),
+      ));
+
+  //#endregion
 
   //#region SyncInput
   @override
