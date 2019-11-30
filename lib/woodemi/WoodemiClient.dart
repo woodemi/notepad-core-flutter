@@ -25,6 +25,7 @@ const WOODEMI_PREFIX = [0x57, 0x44, 0x4d]; // 'WDM'
 
 final defaultAuthToken = Uint8List.fromList([0x00, 0x00, 0x00, 0x01]);
 
+const MTU_WUART = 247;
 const A1_WIDTH = 14800;
 const A1_HEIGHT = 21000;
 
@@ -65,7 +66,6 @@ class WoodemiClient extends NotepadClient {
 
   @override
   Future<void> completeConnection(void awaitConfirm(bool)) async {
-    await super.completeConnection(awaitConfirm);
     var accessResult = await _checkAccess(defaultAuthToken, 10, awaitConfirm);
     switch(accessResult) {
       case AccessResult.Denied:
@@ -75,6 +75,9 @@ class WoodemiClient extends NotepadClient {
       default:
         break;
     }
+
+    await super.completeConnection(awaitConfirm);
+    await notepadType.configMtu(MTU_WUART);
   }
 
   Future<AccessResult> _checkAccess(Uint8List authToken, int seconds, void awaitConfirm(bool)) async {
