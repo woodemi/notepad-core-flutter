@@ -35,6 +35,7 @@ abstract class NotepadClient {
     });
   }
 
+  // #region device info
   Future<String> getDeviceName();
 
   Future<void> setDeviceName(String name);
@@ -50,8 +51,23 @@ abstract class NotepadClient {
   Future<void> setAutoLockTime(int time); // minute
 
   Future<VersionInfo> getVersionInfo();
+  // #endregion
 
   NotepadClientCallback callback;
+
+  //#region authorization
+  Uint8List _authToken;
+
+  Uint8List get authToken => _authToken;
+
+  void setAuthToken(Uint8List authToken) {
+    _authToken = authToken;
+  }
+
+  Future<void> claimAuth();
+
+  Future<void> disclaimAuth();
+  //#endregion
 
   //#region SyncInput
   Future<void> setMode(NotepadMode notepadMode);
