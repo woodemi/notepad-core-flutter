@@ -21,6 +21,7 @@ abstract class NotepadClient {
   List<Tuple2<String, String>> get inputNotificationCharacteristics;
 
   NotepadType notepadType;
+  Uint8List authToken;
 
   Future<void> completeConnection(void awaitConfirm(bool)) {
     // TODO Cancel
@@ -35,5 +36,13 @@ abstract class NotepadClient {
   Future<void> setMode(NotepadMode notepadMode);
 
   List<NotePenPointer> parseSyncData(Uint8List value);
+  //#endregion
+
+  //#region authorization
+  setAuthToken([Uint8List authToken]);
+
+  Future<void> claimAuth();
+
+  Future<void> disclaimAuth();
   //#endregion
 }

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../Common.dart';
 import '../Notepad.dart';
 import '../NotepadClient.dart';
@@ -35,8 +37,9 @@ class NotepadConnector {
   NotepadClient _notepadClient;
   NotepadType _notepadType;
 
-  void connect(NotepadScanResult scanResult) {
+  void connect(NotepadScanResult scanResult, [Uint8List authToken]) {
     _notepadClient = create(scanResult);
+    _notepadClient.setAuthToken(authToken);
     _notepadType = NotepadType(_notepadClient);
     method.invokeMethod('connect', {
       'deviceId': scanResult.deviceId,

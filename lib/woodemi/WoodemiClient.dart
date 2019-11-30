@@ -54,7 +54,7 @@ class WoodemiClient extends NotepadClient {
   @override
   Future<void> completeConnection(void awaitConfirm(bool)) async {
     await super.completeConnection(awaitConfirm);
-    var accessResult = await _checkAccess(defaultAuthToken, 10, awaitConfirm);
+    var accessResult = await _checkAccess(authToken ?? defaultAuthToken, 10, awaitConfirm);
     switch(accessResult) {
       case AccessResult.Denied:
         throw AccessException.Denied;
@@ -102,6 +102,29 @@ class WoodemiClient extends NotepadClient {
       return 0 <= pointer.x && pointer.x <= A1_WIDTH
           && 0<= pointer.y && pointer.y <= A1_HEIGHT;
     }).toList();
+  }
+  //#endregion
+
+  //#region authorization
+  setAuthToken([Uint8List authToken]) {
+    var newAuthToken = authToken != null
+        ? authToken
+        : Uint8List.fromList([0x00, 0x00, 0x00, 0x01]);
+    assert(newAuthToken.length == 4, 'authToken should be 4 in length !');
+    this.authToken = authToken;
+  }
+
+  Future<void> claimAuth() async {
+    await sendAuthRequest(authToken, true);
+  }
+
+  Future<void> disclaimAuth() async {
+    if (authToken != null) sendAuthRequest(authToken, false);
+  }
+
+  Future<void> sendAuthRequest(Uint8List authToken, [bool claim = false]) async {
+    var req = Uint8List.fromList([0x04, claim ? 0x00 : 0x01] + authToken.toList()) ;
+    await notepadType.executeCommand(WoodemiCommand(request: req));
   }
   //#endregion
 }
