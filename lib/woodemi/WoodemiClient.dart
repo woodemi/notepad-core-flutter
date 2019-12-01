@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:notepad_core/Common.dart';
 import 'package:notepad_core/Notepad.dart';
 import 'package:notepad_core/NotepadClient.dart';
+import 'package:quiver/iterables.dart' show partition;
 import 'package:tuple/tuple.dart';
 
 import 'ImageTransimission.dart';
@@ -33,6 +33,7 @@ const MTU_WUART = 247;
 const A1_WIDTH = 14800;
 const A1_HEIGHT = 21000;
 
+const SAMPLE_INTERVAL_MS = 5;
 
 enum AccessResult {
   Denied,      // Device claimed by other user
@@ -323,7 +324,24 @@ class WoodemiClient extends NotepadClient {
   }
 
   List<NotePenPointer> _parseMemo(Uint8List bytes, int createdAt) {
-    return List<NotePenPointer>();
+    var byteParts = partition(bytes, 6);
+    var start = createdAt;
+    var pointers = List<NotePenPointer>();
+    for (var byteList in byteParts) {
+      var byteData = Uint8List.fromList(byteList).buffer.asByteData();
+      if (byteList[4] == 0xFF && byteList[5] == 0xFF) {
+        start = byteData.getUint32(0, Endian.little);
+      } else {
+        pointers.add(NotePenPointer(
+          byteData.getUint16(0, Endian.little),
+          byteData.getUint16(0, Endian.little),
+          start,
+          byteData.getUint16(0, Endian.little),
+        ));
+        start += SAMPLE_INTERVAL_MS;
+      }
+    }
+    return pointers;
   }
 
   /// +---------------------------------+
