@@ -426,5 +426,11 @@ class WoodemiClient extends NotepadClient {
     // TODO Take with timeout
     .take(count)
     .map((value) => Tuple2(value[1], value.sublist(2)));
+
+  @override
+  Future<void> deleteMemo() async {
+    // TODO Deal with 0x01 as notification instead of response
+    await notepadType.sendRequestAsync('FileInputControl', fileInputControlRequestCharacteristic, Uint8List.fromList([0x06, 0x00, 0x00, 0x00]));
+  }
   //#endregion
 }
