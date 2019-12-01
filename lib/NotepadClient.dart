@@ -35,6 +35,24 @@ abstract class NotepadClient {
     });
   }
 
+  // #region device info
+  Future<String> getDeviceName();
+
+  Future<void> setDeviceName(String name);
+
+  Future<BatteryInfo> getBatteryInfo();
+
+  Future<int> getDeviceDate();
+
+  Future<void> setDeviceDate(int date);
+
+  Future<int> getAutoLockTime(); // minute
+
+  Future<void> setAutoLockTime(int time); // minute
+
+  Future<VersionInfo> getVersionInfo();
+  // #endregion
+
   NotepadClientCallback callback;
 
   //#region authorization

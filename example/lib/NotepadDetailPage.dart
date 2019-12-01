@@ -11,7 +11,10 @@ class NotepadDetailPage extends StatefulWidget {
   State<StatefulWidget> createState() => _NotepadDetailPageState();
 }
 
-class _NotepadDetailPageState extends State<NotepadDetailPage> implements NotepadClientCallback {
+class _NotepadDetailPageState extends State<NotepadDetailPage>
+    implements NotepadClientCallback {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +48,7 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text('NotepadDetailPage'),
       ),
@@ -98,9 +102,80 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               RaisedButton(
-                child: Text('setMode'),
-                onPressed: () {
-                  _notepadClient.setMode(NotepadMode.Sync);
+                child: Text('getDeviceName'),
+                onPressed: () async {
+                  _toast('DeviceName: ${await _notepadClient.getDeviceName()}');
+                },
+              ),
+              RaisedButton(
+                child: Text('setDeviceName'),
+                onPressed: () async => {
+                  await _notepadClient.setDeviceName('abc'),
+                  _toast(
+                      'New DeviceName: ${await _notepadClient.getDeviceName()}'),
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getDeviceDate'),
+                onPressed: () async {
+                  _toast('date = ${await _notepadClient.getDeviceDate()}');
+                },
+              ),
+              RaisedButton(
+                child: Text('setDeviceDate'),
+                onPressed: () async => {
+                  await _notepadClient.setDeviceDate(0), // second
+                  _toast(
+                      'new DeivceDate = ${await _notepadClient.getDeviceDate()}'),
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getAutoLockTime'),
+                onPressed: () async => _toast(
+                    'AutoLockTime = ${await _notepadClient.getAutoLockTime()}'),
+              ),
+              RaisedButton(
+                child: Text('setAutoLockTime'),
+                onPressed: () async => {
+                  await _notepadClient.setAutoLockTime(10),
+                  _toast(
+                      'new AutoLockTime = ${await _notepadClient.getAutoLockTime()}')
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getVersionInfo'),
+                onPressed: () async {
+                  VersionInfo version = await _notepadClient.getVersionInfo();
+                  _toast(
+                      'version.hardware = ${version.hardware.major}  version.software = ${version.hardware.minor} version.software = ${version.software.major} version.software = ${version.software.minor} version.software = ${version.software.patch}');
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('getBatteryInfo'),
+                onPressed: () async {
+                  BatteryInfo battery = await _notepadClient.getBatteryInfo();
+                  _toast(
+                      'battery.percent = ${battery.percent}  battery.charging = ${battery.charging}');
                 },
               ),
             ],
@@ -115,6 +190,11 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
                   print('getMemoSummary $memoSummary');
                 },
               ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
               RaisedButton(
                 child: Text('getMemoInfo'),
                 onPressed: () async {
@@ -130,8 +210,20 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
               RaisedButton(
                 child: Text('importMemo'),
                 onPressed: () async {
-                  var memoData = await _notepadClient.importMemo((progress) => print('progress $progress'));
+                  var memoData = await _notepadClient
+                      .importMemo((progress) => print('progress $progress'));
                   print('importMemo $memoData');
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                child: Text('setMode'),
+                onPressed: () {
+                  _notepadClient.setMode(NotepadMode.Sync);
                 },
               ),
             ],
@@ -140,4 +232,11 @@ class _NotepadDetailPageState extends State<NotepadDetailPage> implements Notepa
       ),
     );
   }
+
+  _toast(String msg) => _scaffoldKey.currentState.showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          duration: Duration(seconds: 2),
+        ),
+      );
 }

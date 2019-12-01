@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:notepad_core/Common.dart';
 import 'package:notepad_core/Notepad.dart';
@@ -128,13 +130,107 @@ class WoodemiClient extends NotepadClient {
 
   //#endregion
 
+  //#region Device Info
+  @override
+  Future<String> getDeviceName() async {
+    final command = WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x04]),
+      intercept: (value) => value.first == 0x0F,
+      handle: (value) => utf8.decode(
+        value.sublist(1),
+      ),
+    );
+    return await notepadType.executeCommand(command);
+  }
+
+  @override
+  Future<void> setDeviceName(String name) async {
+    final list = utf8.encode(name);
+    final data = list.length >= 15
+        ? list.sublist(0, 15)
+        : list + List.filled(15 - list.length, 0x00);
+    return await notepadType.executeCommand(
+      WoodemiCommand(
+        request: Uint8List.fromList([0x0B] + data),
+      ),
+    );
+  }
+
+  @override
+  Future<BatteryInfo> getBatteryInfo() {
+    // TODO: implement getBatteryInfo
+    return null;
+  }
+
+  @override
+  Future<int> getDeviceDate() async {
+    final command = WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x01]),
+      intercept: (value) => value.first == 0x0C,
+      handle: (value) => value.sublist(2).first,
+    );
+    return await notepadType.executeCommand(command);
+  }
+
+  @override
+  Future<void> setDeviceDate(int second) async {
+    final data = Uint32List.fromList([second]).buffer.asUint8List();
+    await notepadType.executeCommand(
+      WoodemiCommand(
+        request: Uint8List.fromList(
+          [0x0A] + data.toList(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> setAutoLockTime(int time) async {
+    final sleepTime = Uint32List.fromList([time]).buffer.asUint8List();
+    await notepadType.executeCommand(
+      WoodemiCommand(
+        request: Uint8List.fromList(
+          [0x11, 0x01] + sleepTime.toList(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<int> getAutoLockTime() async {
+    final command = WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x05]),
+      intercept: (value) => value.first == 0x10,
+      handle: (value) => value.sublist(2).first,
+    );
+    return await notepadType.executeCommand(command);
+  }
+
+  @override
+  Future<VersionInfo> getVersionInfo() async {
+    final command = WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x00]),
+      intercept: (value) => value.first == 0x09,
+      handle: (value) {
+        final data = value.sublist(1);
+        final hardware = Version(data[1], data[2]);
+        final software = Version(data[3], data[4], data[5]);
+        return VersionInfo(hardware: hardware, software: software);
+      },
+    );
+    return await notepadType.executeCommand(command);
+  }
+  //#endregion
+
   //#region SyncInput
   @override
   Future<void> setMode(NotepadMode notepadMode) async {
     var mode = notepadMode == NotepadMode.Sync ? 0x00 : 0x01;
-    await notepadType.executeCommand(WoodemiCommand(
-      request: Uint8List.fromList([0x05, mode]),
-    ));
+    await notepadType.executeCommand(
+      WoodemiCommand(
+        request: Uint8List.fromList([0x05, mode]),
+      ),
+    );
   }
 
   @override
