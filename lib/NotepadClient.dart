@@ -5,6 +5,13 @@ import 'package:tuple/tuple.dart';
 import 'Notepad.dart';
 import 'NotepadType.dart';
 
+const GSS_SUFFIX = "0000-1000-8000-00805F9B34FB";
+const CODE__SERV_BATTERY = "180F";
+const CODE__CHAR_BATTERY_LEVEL = "2A19";
+
+const SERV__BATTERY = "0000$CODE__SERV_BATTERY-$GSS_SUFFIX";
+const CHAR__BATTERY_LEVEL = "0000$CODE__CHAR_BATTERY_LEVEL-$GSS_SUFFIX";
+
 abstract class NotepadClientCallback {
   void handlePointer(List<NotePenPointer> list);
 }

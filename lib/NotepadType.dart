@@ -45,12 +45,20 @@ class NotepadType {
   }
 
   Stream<Uint8List> receiveValue(Tuple2<String, String> serviceCharacteristic) =>
-      _bleType.inputValueStream.where((cv) => cv.item1 == serviceCharacteristic.item2).map((cv) => cv.item2);
+      _bleType.inputValueStream.where((cv) {
+        return cv.item1 == serviceCharacteristic.item2 || '0000${cv.item1}-$GSS_SUFFIX' == serviceCharacteristic.item2;
+      }).map((cv) => cv.item2);
 
   Future<Uint8List> receiveResponseAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Predicate intercept) async {
     var response = await receiveValue(serviceCharacteristic).firstWhere(intercept);
     print('on${messageHead}Receive: ${hex.encode(response)}');
     return response;
+  }
+
+  Future<T> fetchProperty<T>(Tuple2<String, String> serviceCharacteristic, Handle<T> handle) async {
+    _bleType.readValue(serviceCharacteristic);
+    var value = await receiveResponseAsync('Property', serviceCharacteristic, (value) => true);
+    return handle(value);
   }
 
   Future<T> executeCommand<T>(NotepadCommand<T> command) async {

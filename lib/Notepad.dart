@@ -23,12 +23,10 @@ class NotepadScanResult {
 enum NotepadMode { Sync, Common }
 
 class BatteryInfo {
-  int percent;
-  bool charging;
+  final int percent;
+  final bool charging;
 
-  BatteryInfo.fromMap(map)
-      : this.percent = map['percent'],
-        this.charging = map['charging'];
+  BatteryInfo(this.percent, this.charging);
 }
 
 class VersionInfo {

@@ -82,6 +82,14 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
                 })
                 result.success(null)
             }
+            "readValue" -> {
+                val service = call.argument<String>("service")!!
+                val characteristic = call.argument<String>("characteristic")!!
+                connectGatt?.getCharacteristic(service to characteristic)?.let {
+                    connectGatt?.readCharacteristic(it)
+                }
+                result.success(null)
+            }
             "writeValue" -> {
                 val service = call.argument<String>("service")!!
                 val characteristic = call.argument<String>("characteristic")!!
@@ -176,6 +184,16 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
             if (gatt != connectGatt) return
             Log.v(TAG, "onDescriptorWrite ${descriptor.uuid}, ${descriptor.characteristic.uuid}, $status")
             mainThreadHandler.post { clientMessage.send(mapOf("characteristicConfig" to descriptor.characteristic.uuid.uuidString)) }
+        }
+
+        override fun onCharacteristicRead(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic, status: Int) {
+            if (gatt != connectGatt) return
+            Log.v(TAG, "onCharacteristicRead ${characteristic.uuid}, ${characteristic.value.contentToString()} $status")
+            val characteristicValue = mapOf(
+                    "characteristic" to characteristic.uuid.uuidString,
+                    "value" to characteristic.value
+            )
+            mainThreadHandler.post { clientMessage.send(mapOf("characteristicValue" to characteristicValue)) }
         }
 
         override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic, status: Int) {
