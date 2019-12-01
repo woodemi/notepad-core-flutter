@@ -35,6 +35,10 @@ class NotepadType {
     mtu = await _bleType.requestMtu(expectedMtu) - GATT_HEADER_LENGTH;
   }
 
+  void configConnectionPriority(BleConnectionPriority bleConnectionPriority) {
+    _bleType.requestConnectionPriority(bleConnectionPriority);
+  }
+
   void sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request) async {
     _bleType.writeValue(serviceCharacteristic, request);
     print('on${messageHead}Send: ${hex.encode(request)}');
