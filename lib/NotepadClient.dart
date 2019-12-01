@@ -81,5 +81,7 @@ abstract class NotepadClient {
   Future<MemoInfo> getMemoInfo();
 
   Future<MemoData> importMemo(void progress(int));
+
+  Future<void> deleteMemo();
   //#endregion
 }
