@@ -16,6 +16,12 @@ abstract class NotepadClient {
 
   Tuple2<String, String> get syncInputCharacteristic;
 
+  Tuple2<String, String> get fileInputControlRequestCharacteristic;
+
+  Tuple2<String, String> get fileInputControlResponseCharacteristic;
+
+  Tuple2<String, String> get fileInputCharacteristic;
+
   List<Tuple2<String, String>> get inputIndicationCharacteristics;
 
   List<Tuple2<String, String>> get inputNotificationCharacteristics;
@@ -29,11 +35,53 @@ abstract class NotepadClient {
     });
   }
 
+  // #region device info
+  Future<String> getDeviceName();
+
+  Future<void> setDeviceName(String name);
+
+  Future<BatteryInfo> getBatteryInfo();
+
+  Future<int> getDeviceDate();
+
+  Future<void> setDeviceDate(int date);
+
+  Future<int> getAutoLockTime(); // minute
+
+  Future<void> setAutoLockTime(int time); // minute
+
+  Future<VersionInfo> getVersionInfo();
+  // #endregion
+
   NotepadClientCallback callback;
+
+  //#region authorization
+  Uint8List _authToken;
+
+  Uint8List get authToken => _authToken;
+
+  void setAuthToken(Uint8List authToken) {
+    _authToken = authToken;
+  }
+
+  Future<void> claimAuth();
+
+  Future<void> disclaimAuth();
+  //#endregion
 
   //#region SyncInput
   Future<void> setMode(NotepadMode notepadMode);
 
   List<NotePenPointer> parseSyncData(Uint8List value);
+  //#endregion
+
+  //#region ImportMemo
+  Future<MemoSummary> getMemoSummary();
+
+  Future<MemoInfo> getMemoInfo();
+
+  Future<MemoData> importMemo(void progress(int));
+
+  Future<void> deleteMemo();
   //#endregion
 }

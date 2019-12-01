@@ -1,3 +1,11 @@
+## 0.4.0
+
+### NotepadClient
+
+- Authorization: Add `claimAuth` & `disclaimAuth`
+- Device info: Add `getDeviceName`, `setDeviceName`, `getBatteryInfo`, `getDeviceDate`, `setDeviceDate`, `getAutoLockTime`, `setAutoLockTime`, `getVersionInfo`
+- Offline memo: Add `getMemoSummary`, `getMemoInfo`, `importMemo`, `deleteMemo`
+
 ## 0.3.0
 
 - Add `setMode` to `NotepadClient`, with `NotepadMode.Sync`

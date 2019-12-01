@@ -1,6 +1,6 @@
 name: notepad_core
 description: A new flutter plugin project.
-version: 0.3.0
+version: 0.4.0
 author: woodemi-dev@woodemi.com
 homepage: http://www.woodemi.com
 
@@ -12,6 +12,7 @@ dependencies:
     sdk: flutter
   tuple: ^1.0.3
   convert: ^2.1.1
+  quiver: ^2.0.5
 
 dev_dependencies:
   flutter_test:

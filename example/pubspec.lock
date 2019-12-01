@@ -73,7 +73,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.3.0"
+    version: "0.4.0"
   path:
     dependency: transitive
     description:
@@ -142,6 +142,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.2.5"
+  tf_toast:
+    dependency: "direct main"
+    description:
+      name: tf_toast
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.4.0"
   tuple:
     dependency: transitive
     description:
