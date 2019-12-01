@@ -347,7 +347,7 @@ class WoodemiClient extends NotepadClient {
       print('receiveBlock size(${block.length})');
       data = Uint8List.fromList(data + block);
     }
-    return ImageTransmission(data);
+    return ImageTransmission.fromBytes(data);
   }
 
   /// Request in file input control pipe
