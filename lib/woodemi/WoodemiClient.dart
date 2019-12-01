@@ -159,9 +159,16 @@ class WoodemiClient extends NotepadClient {
   }
 
   @override
-  Future<BatteryInfo> getBatteryInfo() {
-    // TODO: implement getBatteryInfo
-    return null;
+  Future<BatteryInfo> getBatteryInfo() async {
+    var percent = await notepadType.fetchProperty(Tuple2(SERV__BATTERY, CHAR__BATTERY_LEVEL), (value) {
+      return value.buffer.asByteData().getUint8(0);
+    });
+    var charging = await notepadType.executeCommand(WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x03]),
+      intercept: (value) => value[0] == 0x06 && value[1] == 0x01,
+      handle: (value) => value[2] == 0x01
+    ));
+    return BatteryInfo(percent, charging);
   }
 
   @override
