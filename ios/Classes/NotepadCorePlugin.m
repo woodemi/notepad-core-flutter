@@ -92,6 +92,9 @@ const int GATT_HEADER_LENGTH = 3;
         result(nil);
         NSLog(@"peripheral.maximumWriteValueLengthForType:CBCharacteristicWriteWithoutResponse %lu", (unsigned long) mtu);
         [_clientMessage sendMessage:@{@"mtuConfig": @(mtu + GATT_HEADER_LENGTH)}];
+    } else if ([call.method isEqualToString:@"requestConnectionPriority"]) {
+        // Ignore API for Android
+        result(nil);
     } else if ([call.method isEqualToString:@"writeValue"]) {
         NSString *service = call.arguments[@"service"];
         NSString *characteristic = call.arguments[@"characteristic"];
