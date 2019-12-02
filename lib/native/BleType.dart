@@ -15,6 +15,16 @@ class BleInputProperty {
   BleInputProperty._(this.value);
 }
 
+class BleConnectionPriority {
+  static final balanced = BleConnectionPriority._('balanced');
+  static final high = BleConnectionPriority._('high');
+  static final lowPower = BleConnectionPriority._('lowPower');
+
+  final String value;
+
+  BleConnectionPriority._(this.value);
+}
+
 class BleType {
   final tag = 'BleType';
 
@@ -43,6 +53,19 @@ class BleType {
       'expectedMtu': expectedMtu,
     }).then((_) => print('requestMtu invokeMethod success'));
     return await _mtuConfigController.stream.first;
+  }
+
+  void requestConnectionPriority(BleConnectionPriority bleConnectionPriority) {
+    method.invokeMethod('requestConnectionPriority', {
+      'bleConnectionPriority': bleConnectionPriority.value,
+    }).then((_) => print('requestMtu invokeMethod success'));
+  }
+
+  void readValue(Tuple2<String, String> serviceCharacteristic) {
+    method.invokeListMethod('readValue', {
+      'service': serviceCharacteristic.item1,
+      'characteristic': serviceCharacteristic.item2,
+    }).then((_) => print('readValue invokeMethod success'));
   }
 
   void writeValue(Tuple2<String, String> serviceCharacteristic, Uint8List value) {

@@ -5,8 +5,17 @@ import 'package:tuple/tuple.dart';
 import 'Notepad.dart';
 import 'NotepadType.dart';
 
+const GSS_SUFFIX = "0000-1000-8000-00805F9B34FB";
+const CODE__SERV_BATTERY = "180F";
+const CODE__CHAR_BATTERY_LEVEL = "2A19";
+
+const SERV__BATTERY = "0000$CODE__SERV_BATTERY-$GSS_SUFFIX";
+const CHAR__BATTERY_LEVEL = "0000$CODE__CHAR_BATTERY_LEVEL-$GSS_SUFFIX";
+
 abstract class NotepadClientCallback {
   void handlePointer(List<NotePenPointer> list);
+
+  void handleEvent(NotepadEvent notepadEvent);
 }
 
 abstract class NotepadClient {
@@ -35,24 +44,6 @@ abstract class NotepadClient {
     });
   }
 
-  // #region device info
-  Future<String> getDeviceName();
-
-  Future<void> setDeviceName(String name);
-
-  Future<BatteryInfo> getBatteryInfo();
-
-  Future<int> getDeviceDate();
-
-  Future<void> setDeviceDate(int date);
-
-  Future<int> getAutoLockTime(); // minute
-
-  Future<void> setAutoLockTime(int time); // minute
-
-  Future<VersionInfo> getVersionInfo();
-  // #endregion
-
   NotepadClientCallback callback;
 
   //#region authorization
@@ -69,6 +60,22 @@ abstract class NotepadClient {
   Future<void> disclaimAuth();
   //#endregion
 
+  //#region device info
+  Future<String> getDeviceName();
+
+  Future<void> setDeviceName(String name);
+
+  Future<BatteryInfo> getBatteryInfo();
+
+  Future<int> getDeviceDate();
+
+  Future<void> setDeviceDate(int date);
+
+  Future<int> getAutoLockTime(); // minute
+
+  Future<void> setAutoLockTime(int time); // minute
+  //#endregion
+
   //#region SyncInput
   Future<void> setMode(NotepadMode notepadMode);
 
@@ -83,5 +90,11 @@ abstract class NotepadClient {
   Future<MemoData> importMemo(void progress(int));
 
   Future<void> deleteMemo();
+  //#endregion
+
+  //#region Version
+  Future<VersionInfo> getVersionInfo();
+
+  Future<void> upgrade(String filePath, VersionInfo version, void progress(int));
   //#endregion
 }

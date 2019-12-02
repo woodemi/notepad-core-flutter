@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:convert/convert.dart';
+import 'package:flutter/foundation.dart';
 import 'package:notepad_core/Common.dart';
 import 'package:notepad_core/Notepad.dart';
 import 'package:notepad_core/NotepadClient.dart';
+import 'package:notepad_core/native/BleType.dart';
 import 'package:quiver/iterables.dart' show partition;
 import 'package:tuple/tuple.dart';
 
@@ -87,6 +90,7 @@ class WoodemiClient extends NotepadClient {
 
     await super.completeConnection(awaitConfirm);
     await notepadType.configMtu(MTU_WUART);
+    _configMessageInput();
   }
 
   Future<AccessResult> _checkAccess(Uint8List authToken, int seconds, void awaitConfirm(bool)) async {
@@ -158,9 +162,16 @@ class WoodemiClient extends NotepadClient {
   }
 
   @override
-  Future<BatteryInfo> getBatteryInfo() {
-    // TODO: implement getBatteryInfo
-    return null;
+  Future<BatteryInfo> getBatteryInfo() async {
+    var percent = await notepadType.fetchProperty(Tuple2(SERV__BATTERY, CHAR__BATTERY_LEVEL), (value) {
+      return value.buffer.asByteData().getUint8(0);
+    });
+    var charging = await notepadType.executeCommand(WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x03]),
+      intercept: (value) => value[0] == 0x06 && value[1] == 0x01,
+      handle: (value) => value[2] == 0x01
+    ));
+    return BatteryInfo(percent, charging);
   }
 
   @override
@@ -186,12 +197,14 @@ class WoodemiClient extends NotepadClient {
   }
 
   @override
-  Future<void> setAutoLockTime(int time) async {
-    final sleepTime = Uint32List.fromList([time]).buffer.asUint8List();
+  Future<void> setAutoLockTime(int minute) async {
+    var byteData = ByteData(4);
+    final second = Duration(minutes: minute).inSeconds;
+    byteData.setUint32(0, second, Endian.little);
     await notepadType.executeCommand(
       WoodemiCommand(
         request: Uint8List.fromList(
-          [0x11, 0x01] + sleepTime.toList(),
+          [0x11, 0x01] + byteData.buffer.asUint8List(),
         ),
       ),
     );
@@ -202,21 +215,10 @@ class WoodemiClient extends NotepadClient {
     final command = WoodemiCommand(
       request: Uint8List.fromList([0x08, 0x05]),
       intercept: (value) => value.first == 0x10,
-      handle: (value) => value.sublist(2).first,
-    );
-    return await notepadType.executeCommand(command);
-  }
-
-  @override
-  Future<VersionInfo> getVersionInfo() async {
-    final command = WoodemiCommand(
-      request: Uint8List.fromList([0x08, 0x00]),
-      intercept: (value) => value.first == 0x09,
       handle: (value) {
-        final data = value.sublist(1);
-        final hardware = Version(data[1], data[2]);
-        final software = Version(data[3], data[4], data[5]);
-        return VersionInfo(hardware: hardware, software: software);
+        final byteData = value.buffer.asByteData();
+        final seconds = byteData.getUint32(2, Endian.little);
+        return Duration(seconds: seconds).inMinutes;
       },
     );
     return await notepadType.executeCommand(command);
@@ -227,6 +229,8 @@ class WoodemiClient extends NotepadClient {
   @override
   Future<void> setMode(NotepadMode notepadMode) async {
     var mode = notepadMode == NotepadMode.Sync ? 0x00 : 0x01;
+    var bleConnectionPriority = notepadMode == NotepadMode.Sync ? BleConnectionPriority.high : BleConnectionPriority.balanced;
+    notepadType.configConnectionPriority(bleConnectionPriority);
     await notepadType.executeCommand(
       WoodemiCommand(
         request: Uint8List.fromList([0x05, mode]),
@@ -240,6 +244,32 @@ class WoodemiClient extends NotepadClient {
       return 0 <= pointer.x && pointer.x <= A1_WIDTH
           && 0<= pointer.y && pointer.y <= A1_HEIGHT;
     }).toList();
+  }
+
+  void _configMessageInput() {
+    notepadType.receiveValue(commandResponseCharacteristic)
+        .where((value) => value.first == 0x06 || value.first == 0x0E)
+        .map((value) {
+          print('onMessageInputReceive ${hex.encode(value)}');
+          return value;
+        })
+        .listen(_handleMessageInput);
+  }
+
+  void _handleMessageInput(Uint8List value) {
+    print('handleMessageInput: ${value}');
+    var tuple01 = value.sublist(0, 2);
+    if (listEquals(tuple01, [0x06, 0x00])) {
+      if (value[2] == 0x01)
+        callback.handleEvent(NotepadEvent.KeyEvent(KeyEventType.KeyUp, KeyEventCode.Main));
+    } else if (listEquals(tuple01, [0x06, 0x01])) {
+      var type = value[2] == 0x01 ? ChargingStatusEventType.PowerOn : ChargingStatusEventType.PowerOff;
+      callback.handleEvent(NotepadEvent.ChargingStatusEvent(type));
+    } else if (listEquals(tuple01, [0x0E, 0x01])) {
+      callback.handleEvent(NotepadEvent.BatteryAlertEvent());
+    } else if (listEquals(tuple01, [0x0E, 0x02])) {
+      callback.handleEvent(NotepadEvent.StorageAlertEvent());
+    }
   }
   //#endregion
 
@@ -431,6 +461,29 @@ class WoodemiClient extends NotepadClient {
   Future<void> deleteMemo() async {
     // TODO Deal with 0x01 as notification instead of response
     await notepadType.sendRequestAsync('FileInputControl', fileInputControlRequestCharacteristic, Uint8List.fromList([0x06, 0x00, 0x00, 0x00]));
+  }
+  //#endregion
+
+  //#region Version
+  @override
+  Future<VersionInfo> getVersionInfo() async {
+    final command = WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x00]),
+      intercept: (value) => value.first == 0x09,
+      handle: (value) {
+        final data = value.sublist(1);
+        final hardware = Version(data[1], data[2]);
+        final software = Version(data[3], data[4], data[5]);
+        return VersionInfo(hardware: hardware, software: software);
+      },
+    );
+    return await notepadType.executeCommand(command);
+  }
+
+  @override
+  Future<void> upgrade(String filePath, VersionInfo version, void progress(int)) {
+    // TODO: implement upgrade
+    return null;
   }
   //#endregion
 }

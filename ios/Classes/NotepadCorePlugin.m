@@ -3,6 +3,8 @@
 
 const int GATT_HEADER_LENGTH = 3;
 
+NSString *GSS_SUFFIX = @"0000-1000-8000-00805F9B34FB";
+
 # pragma CBPeripheral+Extensions
 
 @interface CBPeripheral (Extensions)
@@ -11,11 +13,13 @@ const int GATT_HEADER_LENGTH = 3;
 @implementation CBPeripheral (Extensions)
 - (CBCharacteristic *)getCharacteristic:(NSString *)characteristic ofService:(NSString *)service {
     NSUInteger serviceIndex = [self.services indexOfObjectPassingTest:^BOOL(CBService *obj, NSUInteger idx, BOOL *stop) {
-        return [obj.UUID.UUIDString isEqualToString:service];
+        NSString *withGss = [NSString stringWithFormat:@"0000%@-%@", obj.UUID.UUIDString, GSS_SUFFIX];
+        return [obj.UUID.UUIDString isEqualToString:service] || [withGss isEqualToString:service];
     }];
     NSArray<CBCharacteristic *> *characteristics = self.services[serviceIndex].characteristics;
     NSUInteger characteristicIndex = [characteristics indexOfObjectPassingTest:^BOOL(CBCharacteristic *obj, NSUInteger idx, BOOL *stop) {
-        return [obj.UUID.UUIDString isEqualToString:characteristic];
+        NSString *withGss = [NSString stringWithFormat:@"0000%@-%@", obj.UUID.UUIDString, GSS_SUFFIX];
+        return [obj.UUID.UUIDString isEqualToString:characteristic] || [withGss isEqualToString:characteristic];
     }];
     return characteristics[characteristicIndex];
 }
@@ -92,6 +96,14 @@ const int GATT_HEADER_LENGTH = 3;
         result(nil);
         NSLog(@"peripheral.maximumWriteValueLengthForType:CBCharacteristicWriteWithoutResponse %lu", (unsigned long) mtu);
         [_clientMessage sendMessage:@{@"mtuConfig": @(mtu + GATT_HEADER_LENGTH)}];
+    } else if ([call.method isEqualToString:@"requestConnectionPriority"]) {
+        // Ignore API for Android
+        result(nil);
+    } else if ([call.method isEqualToString:@"readValue"]) {
+        NSString *service = call.arguments[@"service"];
+        NSString *characteristic = call.arguments[@"characteristic"];
+        [_peripheral readValueForCharacteristic:[_peripheral getCharacteristic:characteristic ofService:service]];
+        result(nil);
     } else if ([call.method isEqualToString:@"writeValue"]) {
         NSString *service = call.arguments[@"service"];
         NSString *characteristic = call.arguments[@"characteristic"];

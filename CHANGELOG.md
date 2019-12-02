@@ -1,3 +1,15 @@
+## 0.5.0
+
+### NotepadType
+- add `requestConnectionPriority`
+
+### NotepadClient & WoodemiClient
+- Add `upgrade`
+- Add `FileRecord`
+- Add `_configMessageInput`
+- Add `handleEvent`：KeyEvent、ChargingStatusEvent、BatteryAlertEvent、StorageAlertEvent
+- Fix `AutoLockTime`
+
 ## 0.4.0
 
 ### NotepadClient
