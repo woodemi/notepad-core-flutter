@@ -196,12 +196,14 @@ class WoodemiClient extends NotepadClient {
   }
 
   @override
-  Future<void> setAutoLockTime(int time) async {
-    final sleepTime = Uint32List.fromList([time]).buffer.asUint8List();
+  Future<void> setAutoLockTime(int minute) async {
+    var byteData = ByteData(4);
+    final second = Duration(minutes: minute).inSeconds;
+    byteData.setUint32(0, second, Endian.little);
     await notepadType.executeCommand(
       WoodemiCommand(
         request: Uint8List.fromList(
-          [0x11, 0x01] + sleepTime.toList(),
+          [0x11, 0x01] + byteData.buffer.asUint8List(),
         ),
       ),
     );
@@ -212,7 +214,11 @@ class WoodemiClient extends NotepadClient {
     final command = WoodemiCommand(
       request: Uint8List.fromList([0x08, 0x05]),
       intercept: (value) => value.first == 0x10,
-      handle: (value) => value.sublist(2).first,
+      handle: (value) {
+        final byteData = value.buffer.asByteData();
+        final seconds = byteData.getUint32(2, Endian.little);
+        return Duration(seconds: seconds).inMinutes;
+      },
     );
     return await notepadType.executeCommand(command);
   }
