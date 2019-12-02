@@ -44,24 +44,6 @@ abstract class NotepadClient {
     });
   }
 
-  // #region device info
-  Future<String> getDeviceName();
-
-  Future<void> setDeviceName(String name);
-
-  Future<BatteryInfo> getBatteryInfo();
-
-  Future<int> getDeviceDate();
-
-  Future<void> setDeviceDate(int date);
-
-  Future<int> getAutoLockTime(); // minute
-
-  Future<void> setAutoLockTime(int time); // minute
-
-  Future<VersionInfo> getVersionInfo();
-  // #endregion
-
   NotepadClientCallback callback;
 
   //#region authorization
@@ -78,6 +60,22 @@ abstract class NotepadClient {
   Future<void> disclaimAuth();
   //#endregion
 
+  //#region device info
+  Future<String> getDeviceName();
+
+  Future<void> setDeviceName(String name);
+
+  Future<BatteryInfo> getBatteryInfo();
+
+  Future<int> getDeviceDate();
+
+  Future<void> setDeviceDate(int date);
+
+  Future<int> getAutoLockTime(); // minute
+
+  Future<void> setAutoLockTime(int time); // minute
+  //#endregion
+
   //#region SyncInput
   Future<void> setMode(NotepadMode notepadMode);
 
@@ -92,5 +90,11 @@ abstract class NotepadClient {
   Future<MemoData> importMemo(void progress(int));
 
   Future<void> deleteMemo();
+  //#endregion
+
+  //#region Version
+  Future<VersionInfo> getVersionInfo();
+
+  Future<void> upgrade(String filePath, VersionInfo version, void progress(int));
   //#endregion
 }

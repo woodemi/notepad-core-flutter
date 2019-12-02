@@ -216,21 +216,6 @@ class WoodemiClient extends NotepadClient {
     );
     return await notepadType.executeCommand(command);
   }
-
-  @override
-  Future<VersionInfo> getVersionInfo() async {
-    final command = WoodemiCommand(
-      request: Uint8List.fromList([0x08, 0x00]),
-      intercept: (value) => value.first == 0x09,
-      handle: (value) {
-        final data = value.sublist(1);
-        final hardware = Version(data[1], data[2]);
-        final software = Version(data[3], data[4], data[5]);
-        return VersionInfo(hardware: hardware, software: software);
-      },
-    );
-    return await notepadType.executeCommand(command);
-  }
   //#endregion
 
   //#region SyncInput
@@ -462,6 +447,29 @@ class WoodemiClient extends NotepadClient {
   Future<void> deleteMemo() async {
     // TODO Deal with 0x01 as notification instead of response
     await notepadType.sendRequestAsync('FileInputControl', fileInputControlRequestCharacteristic, Uint8List.fromList([0x06, 0x00, 0x00, 0x00]));
+  }
+  //#endregion
+
+  //#region Version
+  @override
+  Future<VersionInfo> getVersionInfo() async {
+    final command = WoodemiCommand(
+      request: Uint8List.fromList([0x08, 0x00]),
+      intercept: (value) => value.first == 0x09,
+      handle: (value) {
+        final data = value.sublist(1);
+        final hardware = Version(data[1], data[2]);
+        final software = Version(data[3], data[4], data[5]);
+        return VersionInfo(hardware: hardware, software: software);
+      },
+    );
+    return await notepadType.executeCommand(command);
+  }
+
+  @override
+  Future<void> upgrade(String filePath, VersionInfo version, void progress(int)) {
+    // TODO: implement upgrade
+    return null;
   }
   //#endregion
 }
