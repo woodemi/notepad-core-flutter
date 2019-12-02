@@ -7,6 +7,7 @@ import 'package:notepad_core/Common.dart';
 import 'package:notepad_core/Notepad.dart';
 import 'package:notepad_core/NotepadClient.dart';
 import 'package:notepad_core/native/BleType.dart';
+import 'package:notepad_core/woodemi/FileRecord.dart';
 import 'package:quiver/iterables.dart' show partition;
 import 'package:tuple/tuple.dart';
 
@@ -473,8 +474,8 @@ class WoodemiClient extends NotepadClient {
   }
 
   @override
-  Future<void> upgrade(String filePath, VersionInfo version, void progress(int)) {
-    // TODO: implement upgrade
+  Future<void> upgrade(String filePath, VersionInfo version, void progress(int)) async {
+    final fileData = await parseUpgradeFile(filePath);
     return null;
   }
   //#endregion
