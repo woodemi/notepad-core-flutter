@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:convert/convert.dart';
 import 'package:notepad_core/Common.dart';
 import 'package:notepad_core/Notepad.dart';
 import 'package:notepad_core/NotepadClient.dart';
@@ -88,6 +89,7 @@ class WoodemiClient extends NotepadClient {
 
     await super.completeConnection(awaitConfirm);
     await notepadType.configMtu(MTU_WUART);
+    _configMessageInput();
   }
 
   Future<AccessResult> _checkAccess(Uint8List authToken, int seconds, void awaitConfirm(bool)) async {
@@ -250,6 +252,25 @@ class WoodemiClient extends NotepadClient {
       return 0 <= pointer.x && pointer.x <= A1_WIDTH
           && 0<= pointer.y && pointer.y <= A1_HEIGHT;
     }).toList();
+  }
+
+  void _configMessageInput() {
+    notepadType.receiveValue(commandResponseCharacteristic)
+        .where((value) => value.first == 0x06)
+        .map((value) {
+          print('onMessageInputReceive ${hex.encode(value)}');
+          return value;
+        })
+        .listen(_handleMessageInput);
+  }
+
+  void _handleMessageInput(Uint8List value) {
+    var data = value.sublist(1);
+    switch (data.first) {
+      case 0x00:
+        callback.handleEvent(KeyEvent(KeyEventType.KeyUp, KeyEventCode.Main));
+        break;
+    }
   }
   //#endregion
 

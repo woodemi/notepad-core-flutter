@@ -46,6 +46,11 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
   }
 
   @override
+  void handleEvent(NotepadEvent notepadEvent) {
+    print('handleEvent $notepadEvent');
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
