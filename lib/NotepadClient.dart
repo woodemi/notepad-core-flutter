@@ -14,6 +14,8 @@ const CHAR__BATTERY_LEVEL = "0000$CODE__CHAR_BATTERY_LEVEL-$GSS_SUFFIX";
 
 abstract class NotepadClientCallback {
   void handlePointer(List<NotePenPointer> list);
+
+  void handleEvent(NotepadEvent notepadEvent);
 }
 
 abstract class NotepadClient {

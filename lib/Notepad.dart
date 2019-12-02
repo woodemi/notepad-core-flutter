@@ -124,3 +124,22 @@ class MemoData {
   @override
   String toString() => '$memoInfo, pointers[${pointers.length}]';
 }
+
+class NotepadEvent {
+
+}
+
+class KeyEvent implements NotepadEvent {
+  final KeyEventType type;
+  final KeyEventCode code;
+
+  KeyEvent(this.type, this.code);
+}
+
+enum KeyEventType {
+  KeyDown, KeyUp
+}
+
+enum KeyEventCode {
+  Main
+}
