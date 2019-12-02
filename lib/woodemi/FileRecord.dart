@@ -1,6 +1,23 @@
 import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
+import 'package:notepad_core/Common.dart';
+
+Future<Uint8List> parseUpgradeFile(String path) async {
+  final lines = (await readUTF8Text(path)).split('\r\n');
+  var records = lines
+      .where((l) => l.isNotEmpty)
+      .map(FileRecord.fromLine)
+      .where((r) => FileRecord.RECORD_TYPE_DATAs.contains(r.tag))
+      .toList();
+
+  var start = records.first.address;
+  var end = records.last.address + records.last.data.length;
+  var result = List.filled(end - start, 0xFF);
+  for (final r in records)
+    result.setRange(r.address - start, r.address - start + r.data.length, r.data);
+  return Uint8List.fromList(result);
+}
 
 /// In Motorola S-records(S19) file format
 /// A single line is a [FileRecord]
@@ -10,6 +27,7 @@ class FileRecord {
   static const RECORD_TYPE_DATA_2 = "S2"; // 24 bit address
   static const RECORD_TYPE_DATA_3 = "S3"; // 32 bit address
   static const RECORD_TYPE_TERMINATION = "S8"; //
+  static const RECORD_TYPE_DATAs = [RECORD_TYPE_DATA_1, RECORD_TYPE_DATA_2, RECORD_TYPE_DATA_3];
 
   final String tag;
 
