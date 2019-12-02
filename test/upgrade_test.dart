@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:convert/convert.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:notepad_core/Common.dart';
+import 'package:notepad_core/Notepad.dart';
 import 'package:notepad_core/woodemi/FileRecord.dart';
+import 'package:notepad_core/woodemi/ImageTransimission.dart';
 
 import 'utils.dart';
 
@@ -23,5 +27,15 @@ void main() async {
     var src = await parseUpgradeFile('$testAssets/1_1_1.srec');
     var dst = hex.decode(await readUTF8Text('$testAssets/1_1_1.srec.hex'));
     expect(src, dst);
+  });
+  
+  test('ImageTransmission.forOutput', () async {
+    final fileData = hex.decode(await readUTF8Text('$testAssets/1_1_1.srec.hex'));
+    final version = Version(1, 1, 1);
+    final imageId = hex.decode('0100');
+    final imageVersion = Uint8List.fromList(version.bytes.reversed.toList() + hex.decode('4111111101'));
+    final imageData = ImageTransmission.forOutput(imageId, imageVersion, fileData).bytes;
+    var dst = hex.decode(await readUTF8Text('$testAssets/1_1_1.img.hex'));
+    expect(imageData, dst);
   });
 }
