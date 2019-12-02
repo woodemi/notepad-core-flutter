@@ -48,6 +48,7 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
   @override
   void handleEvent(NotepadEvent notepadEvent) {
     print('handleEvent $notepadEvent');
+    Toast.show(context, title: notepadEvent.toString());
   }
 
   @override
