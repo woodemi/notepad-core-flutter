@@ -95,6 +95,6 @@ abstract class NotepadClient {
   //#region Version
   Future<VersionInfo> getVersionInfo();
 
-  Future<void> upgrade(String filePath, VersionInfo version, void progress(int));
+  Future<void> upgrade(String filePath, Version version, void progress(int));
   //#endregion
 }

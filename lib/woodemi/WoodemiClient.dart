@@ -388,7 +388,7 @@ class WoodemiClient extends NotepadClient {
       print('receiveBlock size(${block.length})');
       data = Uint8List.fromList(data + block);
     }
-    return ImageTransmission.fromBytes(data);
+    return ImageTransmission.forInput(data);
   }
 
   /// Request in file input control pipe
@@ -474,8 +474,11 @@ class WoodemiClient extends NotepadClient {
   }
 
   @override
-  Future<void> upgrade(String filePath, VersionInfo version, void progress(int)) async {
+  Future<void> upgrade(String filePath, Version version, void progress(int)) async {
     final fileData = await parseUpgradeFile(filePath);
+    final imageId = hex.decode('0100');
+    final imageVersion = Uint8List.fromList(version.bytes.reversed.toList() + hex.decode('4111111101'));
+    final imageData = ImageTransmission.forOutput(imageId, imageVersion, fileData).bytes;
     return null;
   }
   //#endregion
