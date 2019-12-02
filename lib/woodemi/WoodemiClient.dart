@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
+import 'package:flutter/foundation.dart';
 import 'package:notepad_core/Common.dart';
 import 'package:notepad_core/Notepad.dart';
 import 'package:notepad_core/NotepadClient.dart';
@@ -247,7 +248,7 @@ class WoodemiClient extends NotepadClient {
 
   void _configMessageInput() {
     notepadType.receiveValue(commandResponseCharacteristic)
-        .where((value) => value.first == 0x06)
+        .where((value) => value.first == 0x06 || value.first == 0x0E)
         .map((value) {
           print('onMessageInputReceive ${hex.encode(value)}');
           return value;
@@ -256,11 +257,18 @@ class WoodemiClient extends NotepadClient {
   }
 
   void _handleMessageInput(Uint8List value) {
-    var data = value.sublist(1);
-    switch (data.first) {
-      case 0x00:
-        callback.handleEvent(KeyEvent(KeyEventType.KeyUp, KeyEventCode.Main));
-        break;
+    print('handleMessageInput: ${value}');
+    var tuple01 = value.sublist(0, 2);
+    if (listEquals(tuple01, [0x06, 0x00])) {
+      if (value[2] == 0x01)
+        callback.handleEvent(NotepadEvent.KeyEvent(KeyEventType.KeyUp, KeyEventCode.Main));
+    } else if (listEquals(tuple01, [0x06, 0x01])) {
+      var type = value[2] == 0x01 ? ChargingStatusEventType.PowerOn : ChargingStatusEventType.PowerOff;
+      callback.handleEvent(NotepadEvent.ChargingStatusEvent(type));
+    } else if (listEquals(tuple01, [0x0E, 0x01])) {
+      callback.handleEvent(NotepadEvent.BatteryAlertEvent());
+    } else if (listEquals(tuple01, [0x0E, 0x02])) {
+      callback.handleEvent(NotepadEvent.StorageAlertEvent());
     }
   }
   //#endregion
