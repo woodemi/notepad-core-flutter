@@ -28,6 +28,10 @@ const CHAR__FILE_INPUT_CONTROL_REQUEST = '57444D04-$SUFFIX';
 const CHAR__FILE_INPUT_CONTROL_RESPONSE = CHAR__FILE_INPUT_CONTROL_REQUEST;
 const CHAR__FILE_INPUT = '57444D05-$SUFFIX';
 
+const SERV__FILE_OUTPUT = '01FF5550-$SUFFIX';
+const CHAR__FILE_OUTPUT_CONTROL_REQUEST = '01FF5551-$SUFFIX';
+const CHAR__FILE_OUTPUT_CONTROL_RESPONSE = CHAR__FILE_OUTPUT_CONTROL_REQUEST;
+
 const WOODEMI_PREFIX = [0x57, 0x44, 0x4d]; // 'WDM'
 
 final defaultAuthToken = Uint8List.fromList([0x00, 0x00, 0x00, 0x01]);
@@ -65,9 +69,16 @@ class WoodemiClient extends NotepadClient {
   Tuple2<String, String> get fileInputCharacteristic => const Tuple2(SERV__FILE_INPUT, CHAR__FILE_INPUT);
 
   @override
+  Tuple2<String, String> get fileOutputControlRequestCharacteristic => const Tuple2(SERV__FILE_OUTPUT, CHAR__FILE_OUTPUT_CONTROL_REQUEST);
+
+  @override
+  Tuple2<String, String> get fileOutputControlResponseCharacteristic => const Tuple2(SERV__FILE_OUTPUT, CHAR__FILE_OUTPUT_CONTROL_RESPONSE);
+
+  @override
   List<Tuple2<String, String>> get inputIndicationCharacteristics => [
     commandResponseCharacteristic,
     fileInputControlResponseCharacteristic,
+    fileOutputControlResponseCharacteristic,
   ];
 
   @override
@@ -473,13 +484,42 @@ class WoodemiClient extends NotepadClient {
     return await notepadType.executeCommand(command);
   }
 
+  ChunkIterator _upgradeIterator;
+
   @override
   Future<void> upgrade(String filePath, Version version, void progress(int)) async {
     final fileData = await parseUpgradeFile(filePath);
     final imageId = hex.decode('0100');
     final imageVersion = Uint8List.fromList(version.bytes.reversed.toList() + hex.decode('4111111101'));
     final imageData = ImageTransmission.forOutput(imageId, imageVersion, fileData).bytes;
-    return null;
+    var lengthData = ByteData(4)..setUint32(0, imageData.length, Endian.little);
+    var request = [0x03] + imageId + imageVersion + lengthData.buffer.asUint8List();
+
+    notepadType.sendRequestAsync('FileOutputControl', fileOutputControlRequestCharacteristic, Uint8List.fromList(request));
+
+    while (true) {
+      var receivedRequest = await notepadType.receiveResponseAsync('FileOutputControl', fileOutputControlResponseCharacteristic, (value) => true);
+      if (receivedRequest.first == 0x04) {
+        if (_upgradeIterator == null) {
+          _upgradeIterator = ChunkIterator.fromRequest(receivedRequest);
+          sendChunksRecursively(imageData, progress);
+        }
+      } else if (receivedRequest.first == 0x06) {
+        if (receivedRequest[3] != 0x00) throw AssertionError('Data CRC fail');
+        break;
+      } else {
+        print('Unknown receivedRequest ${hex.encode(receivedRequest)}');
+      }
+    }
+    _upgradeIterator = null;
+  }
+
+  void sendChunksRecursively(Uint8List totalData, void progress(int)) {
+    throw UnimplementedError();
   }
   //#endregion
+}
+
+class ChunkIterator {
+  ChunkIterator.fromRequest(receivedRequest);
 }
