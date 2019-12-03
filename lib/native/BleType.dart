@@ -58,7 +58,7 @@ class BleType {
   void requestConnectionPriority(BleConnectionPriority bleConnectionPriority) {
     method.invokeMethod('requestConnectionPriority', {
       'bleConnectionPriority': bleConnectionPriority.value,
-    }).then((_) => print('requestMtu invokeMethod success'));
+    }).then((_) => print('requestConnectionPriority invokeMethod success'));
   }
 
   void readValue(Tuple2<String, String> serviceCharacteristic) {
