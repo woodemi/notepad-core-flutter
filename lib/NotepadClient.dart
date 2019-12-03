@@ -31,6 +31,12 @@ abstract class NotepadClient {
 
   Tuple2<String, String> get fileInputCharacteristic;
 
+  Tuple2<String, String> get fileOutputControlRequestCharacteristic;
+
+  Tuple2<String, String> get fileOutputControlResponseCharacteristic;
+
+  Tuple2<String, String> get fileOutputCharacteristic;
+
   List<Tuple2<String, String>> get inputIndicationCharacteristics;
 
   List<Tuple2<String, String>> get inputNotificationCharacteristics;
@@ -95,6 +101,6 @@ abstract class NotepadClient {
   //#region Version
   Future<VersionInfo> getVersionInfo();
 
-  Future<void> upgrade(String filePath, VersionInfo version, void progress(int));
+  Future<void> upgrade(String filePath, Version version, void progress(int));
   //#endregion
 }

@@ -34,37 +34,20 @@ class VersionInfo {
   Version software;
 
   VersionInfo({this.hardware, this.software});
-
-  VersionInfo.fromMap(map)
-      : this.hardware = Version.fromMap(map['hardware']),
-        this.software = Version.fromMap(map['software']);
 }
 
 class Version {
-  int major;
-  int minor;
-  int patch;
+  final int major;
+  final int minor;
+  final int patch;
 
-  Version(int major, [int minor, int patch])
-      : this.major = major,
-        this.minor = minor,
-        this.patch = patch;
+  Version(this.major, [this.minor, this.patch]);
 
-  Version.fromMap(map)
-      : this.major = map['major'],
-        this.minor = map['minor'],
-        this.patch = map['patch'];
-
-  Map toMap() => {
-        'major': major,
-        'minor': minor,
-        'patch': patch,
-      };
-
-  String get description =>
-      '$major' +
-      (minor != null ? '.$minor' : '') +
-      (patch != null ? '.$patch' : '');
+  Uint8List get bytes => Uint8List.fromList([
+        major,
+        if (minor != null) minor,
+        if (patch != null) patch,
+      ]);
 }
 
 class NotePenPointer {

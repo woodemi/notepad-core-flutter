@@ -1,3 +1,9 @@
+## 0.5.1
+
+### NotepadClient
+
+- Impl `upgrade`
+
 ## 0.5.0
 
 ### NotepadType

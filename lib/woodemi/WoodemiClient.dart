@@ -8,6 +8,7 @@ import 'package:notepad_core/Common.dart';
 import 'package:notepad_core/Notepad.dart';
 import 'package:notepad_core/NotepadClient.dart';
 import 'package:notepad_core/native/BleType.dart';
+import 'package:notepad_core/woodemi/FileRecord.dart';
 import 'package:quiver/iterables.dart' show partition;
 import 'package:tuple/tuple.dart';
 
@@ -28,6 +29,11 @@ const CHAR__FILE_INPUT_CONTROL_REQUEST = '57444D04-$SUFFIX';
 const CHAR__FILE_INPUT_CONTROL_RESPONSE = CHAR__FILE_INPUT_CONTROL_REQUEST;
 const CHAR__FILE_INPUT = '57444D05-$SUFFIX';
 
+const SERV__FILE_OUTPUT = '01FF5550-$SUFFIX';
+const CHAR__FILE_OUTPUT_CONTROL_REQUEST = '01FF5551-$SUFFIX';
+const CHAR__FILE_OUTPUT_CONTROL_RESPONSE = CHAR__FILE_OUTPUT_CONTROL_REQUEST;
+const CHAR__FILE_OUTPUT = '01FF5552-$SUFFIX';
+
 const WOODEMI_PREFIX = [0x57, 0x44, 0x4d]; // 'WDM'
 
 final defaultAuthToken = Uint8List.fromList([0x00, 0x00, 0x00, 0x01]);
@@ -37,6 +43,8 @@ const A1_WIDTH = 14800;
 const A1_HEIGHT = 21000;
 
 const SAMPLE_INTERVAL_MS = 5;
+
+const DEVICE_PROCESSING_INTERVAL = 110;
 
 enum AccessResult {
   Denied,      // Device claimed by other user
@@ -65,9 +73,19 @@ class WoodemiClient extends NotepadClient {
   Tuple2<String, String> get fileInputCharacteristic => const Tuple2(SERV__FILE_INPUT, CHAR__FILE_INPUT);
 
   @override
+  Tuple2<String, String> get fileOutputControlRequestCharacteristic => const Tuple2(SERV__FILE_OUTPUT, CHAR__FILE_OUTPUT_CONTROL_REQUEST);
+
+  @override
+  Tuple2<String, String> get fileOutputControlResponseCharacteristic => const Tuple2(SERV__FILE_OUTPUT, CHAR__FILE_OUTPUT_CONTROL_RESPONSE);
+
+  @override
+  Tuple2<String, String> get fileOutputCharacteristic => const Tuple2(SERV__FILE_OUTPUT, CHAR__FILE_OUTPUT);
+
+  @override
   List<Tuple2<String, String>> get inputIndicationCharacteristics => [
     commandResponseCharacteristic,
     fileInputControlResponseCharacteristic,
+    fileOutputControlResponseCharacteristic,
   ];
 
   @override
@@ -395,7 +413,7 @@ class WoodemiClient extends NotepadClient {
       print('receiveBlock size(${block.length})');
       data = Uint8List.fromList(data + block);
     }
-    return ImageTransmission.fromBytes(data);
+    return ImageTransmission.forInput(data);
   }
 
   /// Request in file input control pipe
@@ -481,9 +499,79 @@ class WoodemiClient extends NotepadClient {
   }
 
   @override
-  Future<void> upgrade(String filePath, VersionInfo version, void progress(int)) {
-    // TODO: implement upgrade
-    return null;
+  Future<void> upgrade(String filePath, Version version, void progress(int)) async {
+    final fileData = await parseUpgradeFile(filePath);
+    final imageId = hex.decode('0100');
+    final imageVersion = Uint8List.fromList(version.bytes.reversed.toList() + hex.decode('4111111101'));
+    final imageData = ImageTransmission.forOutput(imageId, imageVersion, fileData).bytes;
+    var lengthData = ByteData(4)..setUint32(0, imageData.length, Endian.little);
+    var request = [0x03] + imageId + imageVersion + lengthData.buffer.asUint8List();
+
+    notepadType.sendRequestAsync('FileOutputControl', fileOutputControlRequestCharacteristic, Uint8List.fromList(request));
+
+    while (true) {
+      // TODO Timeout
+      var receivedRequest = await notepadType.receiveResponseAsync('FileOutputControl', fileOutputControlResponseCharacteristic, (value) => true);
+      if (receivedRequest.first == 0x04) {
+        final chunks = _parseChunks(receivedRequest, imageData);
+        _sendChunks(chunks, (totalOffset) {
+          if (progress != null) progress(100 * totalOffset ~/ imageData.length);
+        });
+      } else if (receivedRequest.first == 0x06) {
+        if (receivedRequest[3] != 0x00) throw AssertionError('Data CRC fail');
+        break;
+      } else if (receivedRequest[0] == 0x07 && receivedRequest[1] == 0x05) {
+        // [0x07, 0x05, 0x0b] Notepad error when parsing chunks
+        print('Error receivedRequest: ${hex.encode(receivedRequest)}');
+      } else {
+        print('Unknown receivedRequest ${hex.encode(receivedRequest)}');
+      }
+    }
+  }
+
+  Iterable<Chunk> _parseChunks(Uint8List receivedRequest, Uint8List imageData) sync* {
+    final byteData = receivedRequest.buffer.asByteData();
+    var position = 0;
+    position++; // skip request tag
+    position += 2; // skip imageId
+    final currentPos = byteData.getUint32(position, Endian.little);
+    final blockSize = byteData.getUint32(position += 4, Endian.little);
+    final maxChunkSize = byteData.getUint16(position += 4, Endian.little);
+    print('receivedRequest currentPos $currentPos, blockSize $blockSize, maxChunkSize $maxChunkSize');
+
+    final chunkCount = (blockSize / maxChunkSize).ceil();
+    for (var i = 0; i < chunkCount; i++) {
+      final blockOffset = i * maxChunkSize;
+      final chunkSize = min(blockSize - blockOffset, maxChunkSize);
+      final rangeStart = currentPos + blockOffset;
+      final rangeEnd = rangeStart + chunkSize;
+      yield Chunk(i, rangeStart, rangeEnd, imageData.sublist(rangeStart, rangeEnd));
+    }
+  }
+
+  Future<void> _sendChunks(Iterable<Chunk> chunks, void offSetListener(int)) async {
+    var iterator = chunks.iterator..moveNext();
+    while (true) {
+      final c = iterator.current;
+      print('sendChunks ${c.index}, ${c.rangeStart}, ${c.rangeEnd}, ${c.bytes.length}');
+      var chunkData = Uint8List.fromList([0x05, c.index] + c.bytes);
+      notepadType.sendRequestAsync('FileOutput', fileOutputCharacteristic, chunkData, BleOutputProperty.withoutResponse);
+      offSetListener(c.rangeEnd);
+      if (iterator.moveNext()) {
+        await Future.delayed(Duration(milliseconds: DEVICE_PROCESSING_INTERVAL));
+      } else {
+        break;
+      }
+    }
   }
   //#endregion
+}
+
+class Chunk {
+  final int index;
+  final int rangeStart;
+  final int rangeEnd;
+  final Uint8List bytes;
+
+  Chunk(this.index, this.rangeStart, this.rangeEnd, this.bytes);
 }
