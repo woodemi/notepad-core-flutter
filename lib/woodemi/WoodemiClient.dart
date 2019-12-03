@@ -43,6 +43,8 @@ const A1_HEIGHT = 21000;
 
 const SAMPLE_INTERVAL_MS = 5;
 
+const DEVICE_PROCESSING_INTERVAL = 110;
+
 enum AccessResult {
   Denied,      // Device claimed by other user
   Confirmed,   // Access confirmed, indicating device not claimed by anyone
@@ -488,8 +490,6 @@ class WoodemiClient extends NotepadClient {
     return await notepadType.executeCommand(command);
   }
 
-  ChunkIterator _upgradeIterator;
-
   @override
   Future<void> upgrade(String filePath, Version version, void progress(int)) async {
     final fileData = await parseUpgradeFile(filePath);
@@ -502,28 +502,68 @@ class WoodemiClient extends NotepadClient {
     notepadType.sendRequestAsync('FileOutputControl', fileOutputControlRequestCharacteristic, Uint8List.fromList(request));
 
     while (true) {
+      // TODO Timeout
       var receivedRequest = await notepadType.receiveResponseAsync('FileOutputControl', fileOutputControlResponseCharacteristic, (value) => true);
       if (receivedRequest.first == 0x04) {
-        if (_upgradeIterator == null) {
-          _upgradeIterator = ChunkIterator.fromRequest(receivedRequest);
-          sendChunksRecursively(imageData, progress);
-        }
+        final chunks = _parseChunks(receivedRequest, imageData);
+        _sendChunks(chunks, (totalOffset) {
+          if (progress != null) progress(100 * totalOffset ~/ imageData.length);
+        });
       } else if (receivedRequest.first == 0x06) {
         if (receivedRequest[3] != 0x00) throw AssertionError('Data CRC fail');
         break;
+      } else if (receivedRequest[0] == 0x07 && receivedRequest[1] == 0x05) {
+        // [0x07, 0x05, 0x0b] Notepad error when parsing chunks
+        print('Error receivedRequest: ${hex.encode(receivedRequest)}');
       } else {
         print('Unknown receivedRequest ${hex.encode(receivedRequest)}');
       }
     }
-    _upgradeIterator = null;
   }
 
-  void sendChunksRecursively(Uint8List totalData, void progress(int)) {
-    throw UnimplementedError();
+  Iterable<Chunk> _parseChunks(Uint8List receivedRequest, Uint8List imageData) sync* {
+    final byteData = receivedRequest.buffer.asByteData();
+    var position = 0;
+    position++; // skip request tag
+    position += 2; // skip imageId
+    final currentPos = byteData.getUint32(position, Endian.little);
+    final blockSize = byteData.getUint32(position += 4, Endian.little);
+    final maxChunkSize = byteData.getUint16(position += 4, Endian.little);
+    print('receivedRequest currentPos $currentPos, blockSize $blockSize, maxChunkSize $maxChunkSize');
+
+    final chunkCount = (blockSize / maxChunkSize).ceil();
+    for (var i = 0; i < chunkCount; i++) {
+      final blockOffset = i * maxChunkSize;
+      final chunkSize = min(blockSize - blockOffset, maxChunkSize);
+      final rangeStart = currentPos + blockOffset;
+      final rangeEnd = rangeStart + chunkSize;
+      yield Chunk(i, rangeStart, rangeEnd, imageData.sublist(rangeStart, rangeEnd));
+    }
+  }
+
+  Future<void> _sendChunks(Iterable<Chunk> chunks, void offSetListener(int)) async {
+    var iterator = chunks.iterator..moveNext();
+    while (true) {
+      final c = iterator.current;
+      print('sendChunks ${c.index}, ${c.rangeStart}, ${c.rangeEnd}, ${c.bytes.length}');
+      var chunkData = Uint8List.fromList([0x05, c.index] + c.bytes);
+      notepadType.sendRequestAsync('FileOutput', fileOutputCharacteristic, chunkData, BleOutputProperty.withoutResponse);
+      offSetListener(c.rangeEnd);
+      if (iterator.moveNext()) {
+        await Future.delayed(Duration(milliseconds: DEVICE_PROCESSING_INTERVAL));
+      } else {
+        break;
+      }
+    }
   }
   //#endregion
 }
 
-class ChunkIterator {
-  ChunkIterator.fromRequest(receivedRequest);
+class Chunk {
+  final int index;
+  final int rangeStart;
+  final int rangeEnd;
+  final Uint8List bytes;
+
+  Chunk(this.index, this.rangeStart, this.rangeEnd, this.bytes);
 }
