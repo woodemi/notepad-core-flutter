@@ -2,20 +2,26 @@ PODS:
   - Flutter (1.0.0)
   - notepad_core (0.0.1):
     - Flutter
+  - path_provider (0.0.1):
+    - Flutter
 
 DEPENDENCIES:
   - Flutter (from `.symlinks/flutter/ios`)
   - notepad_core (from `.symlinks/plugins/notepad_core/ios`)
+  - path_provider (from `.symlinks/plugins/path_provider/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: ".symlinks/flutter/ios"
   notepad_core:
     :path: ".symlinks/plugins/notepad_core/ios"
+  path_provider:
+    :path: ".symlinks/plugins/path_provider/ios"
 
 SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
   notepad_core: aafff6888c5beb4741509f0ef0004ab66af37e61
+  path_provider: fb74bd0465e96b594bb3b5088ee4a4e7bb1f2a9d
 
 PODFILE CHECKSUM: 7fb83752f59ead6285236625b82473f90b1cb932
 
