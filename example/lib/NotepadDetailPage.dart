@@ -166,6 +166,19 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
                 RaisedButton(
+                  child: Text('getDeviceSize'),
+                  onPressed: () async {
+                    Size size = await _notepadClient.getDeviceSize();
+                    _toast(
+                        'device size = $size');
+                  },
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                RaisedButton(
                   child: Text('getBatteryInfo'),
                   onPressed: () async {
                     BatteryInfo battery = await _notepadClient.getBatteryInfo();

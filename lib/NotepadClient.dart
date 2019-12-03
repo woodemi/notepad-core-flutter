@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:tuple/tuple.dart';
 
@@ -76,6 +77,8 @@ abstract class NotepadClient {
   Future<int> getDeviceDate();
 
   Future<void> setDeviceDate(int date);
+
+  Future<Size> getDeviceSize();
 
   Future<int> getAutoLockTime(); // minute
 

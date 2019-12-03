@@ -1,5 +1,9 @@
 import 'dart:typed_data';
 
+import 'dart:ui';
+
+const DeviceSize = Size(14800, 21000);
+
 class NotepadScanResult {
   String name;
   String deviceId;
