@@ -155,6 +155,9 @@ class WoodemiClient extends NotepadClient {
 
   //#region Device Info
   @override
+  Tuple2<int, int> getDeviceSize() => Tuple2(14800, 21000);
+
+  @override
   Future<String> getDeviceName() async {
     final command = WoodemiCommand(
       request: Uint8List.fromList([0x08, 0x04]),
