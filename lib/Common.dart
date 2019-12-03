@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -41,3 +42,5 @@ List<NotePenPointer> parseSyncPointer(Uint8List value) {
     );
   });
 }
+
+Future<String> readUTF8Text(String path) => File(path).readAsString();

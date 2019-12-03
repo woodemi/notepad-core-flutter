@@ -17,6 +17,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  path_provider: ^1.4.5
 
   notepad_core:
     path: ../

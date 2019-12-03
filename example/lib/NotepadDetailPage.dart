@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:notepad_core/notepad_core.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:tf_toast/Toast.dart';
 
 class NotepadDetailPage extends StatefulWidget {
@@ -165,19 +166,6 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
                 RaisedButton(
-                  child: Text('getVersionInfo'),
-                  onPressed: () async {
-                    VersionInfo version = await _notepadClient.getVersionInfo();
-                    _toast(
-                        'version.hardware = ${version.hardware.major}  version.software = ${version.hardware.minor} version.software = ${version.software.major} version.software = ${version.software.minor} version.software = ${version.software.patch}');
-                  },
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                RaisedButton(
                   child: Text('getBatteryInfo'),
                   onPressed: () async {
                     BatteryInfo battery = await _notepadClient.getBatteryInfo();
@@ -237,6 +225,28 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
                   child: Text('deleteMemo'),
                   onPressed: () {
                     _notepadClient.deleteMemo();
+                  },
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                RaisedButton(
+                  child: Text('getVersionInfo'),
+                  onPressed: () async {
+                    VersionInfo version = await _notepadClient.getVersionInfo();
+                    _toast(
+                        'version.hardware = ${version.hardware.major}  version.software = ${version.hardware.minor} version.software = ${version.software.major} version.software = ${version.software.minor} version.software = ${version.software.patch}');
+                  },
+                ),
+                RaisedButton(
+                  child: Text('upgrade'),
+                  onPressed: () async {
+                    var appDocDir = await getApplicationDocumentsDirectory();
+                    _notepadClient.upgrade('${appDocDir.path}/1_1_4.srec', Version(0xFF, 0xFF, 0xFF), (progress) {
+                      print('upgrade progress $progress');
+                    });
                   },
                 ),
               ],
