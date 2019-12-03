@@ -31,6 +31,7 @@ const CHAR__FILE_INPUT = '57444D05-$SUFFIX';
 const SERV__FILE_OUTPUT = '01FF5550-$SUFFIX';
 const CHAR__FILE_OUTPUT_CONTROL_REQUEST = '01FF5551-$SUFFIX';
 const CHAR__FILE_OUTPUT_CONTROL_RESPONSE = CHAR__FILE_OUTPUT_CONTROL_REQUEST;
+const CHAR__FILE_OUTPUT = '01FF5552-$SUFFIX';
 
 const WOODEMI_PREFIX = [0x57, 0x44, 0x4d]; // 'WDM'
 
@@ -73,6 +74,9 @@ class WoodemiClient extends NotepadClient {
 
   @override
   Tuple2<String, String> get fileOutputControlResponseCharacteristic => const Tuple2(SERV__FILE_OUTPUT, CHAR__FILE_OUTPUT_CONTROL_RESPONSE);
+
+  @override
+  Tuple2<String, String> get fileOutputCharacteristic => const Tuple2(SERV__FILE_OUTPUT, CHAR__FILE_OUTPUT);
 
   @override
   List<Tuple2<String, String>> get inputIndicationCharacteristics => [

@@ -15,6 +15,15 @@ class BleInputProperty {
   BleInputProperty._(this.value);
 }
 
+class BleOutputProperty {
+  static final withResponse = BleOutputProperty._('withResponse');
+  static final withoutResponse = BleOutputProperty._('withoutResponse');
+
+  final String value;
+
+  BleOutputProperty._(this.value);
+}
+
 class BleConnectionPriority {
   static final balanced = BleConnectionPriority._('balanced');
   static final high = BleConnectionPriority._('high');
@@ -68,11 +77,12 @@ class BleType {
     }).then((_) => print('readValue invokeMethod success'));
   }
 
-  void writeValue(Tuple2<String, String> serviceCharacteristic, Uint8List value) {
+  void writeValue(Tuple2<String, String> serviceCharacteristic, Uint8List value, BleOutputProperty bleOutputProperty) {
     method.invokeMethod('writeValue', {
       'service': serviceCharacteristic.item1,
       'characteristic': serviceCharacteristic.item2,
       'value': value,
+      'bleOutputProperty': bleOutputProperty.value,
     }).then((_) => print('writeValue invokeMethod success'));
   }
 

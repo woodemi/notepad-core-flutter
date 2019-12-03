@@ -108,9 +108,11 @@ NSString *GSS_SUFFIX = @"0000-1000-8000-00805F9B34FB";
         NSString *service = call.arguments[@"service"];
         NSString *characteristic = call.arguments[@"characteristic"];
         FlutterStandardTypedData *value = call.arguments[@"value"];
+        NSString *bleOutputProperty = call.arguments[@"bleOutputProperty"];
+        enum CBCharacteristicWriteType type = [bleOutputProperty isEqualToString:@"withoutResponse"] ? CBCharacteristicWriteWithoutResponse : CBCharacteristicWriteWithResponse;
         [_peripheral writeValue:[value data]
               forCharacteristic:[_peripheral getCharacteristic:characteristic ofService:service]
-                           type:CBCharacteristicWriteWithResponse];
+                           type:type];
         result(nil);
     } else {
         result(FlutterMethodNotImplemented);
