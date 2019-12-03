@@ -180,6 +180,9 @@ class WoodemiClient extends NotepadClient {
   }
 
   @override
+  Tuple2<int, int> getDeviceSize() => Tuple2(14800, 21000);
+
+  @override
   Future<BatteryInfo> getBatteryInfo() async {
     var percent = await notepadType.fetchProperty(Tuple2(SERV__BATTERY, CHAR__BATTERY_LEVEL), (value) {
       return value.buffer.asByteData().getUint8(0);

@@ -77,6 +77,8 @@ abstract class NotepadClient {
 
   Future<void> setDeviceDate(int date);
 
+  Tuple2<int, int> getDeviceSize();
+
   Future<int> getAutoLockTime(); // minute
 
   Future<void> setAutoLockTime(int time); // minute
