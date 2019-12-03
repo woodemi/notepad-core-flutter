@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:notepad_core/notepad_core.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tf_toast/Toast.dart';
+import 'package:tuple/tuple.dart';
 
 class NotepadDetailPage extends StatefulWidget {
   final NotepadScanResult scanResult;
@@ -158,6 +159,19 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
                     await _notepadClient.setAutoLockTime(10),
                     _toast(
                         'new AutoLockTime = ${await _notepadClient.getAutoLockTime()}')
+                  },
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                RaisedButton(
+                  child: Text('getDeviceSize'),
+                  onPressed: () async {
+                    Tuple2<int, int> size = _notepadClient.getDeviceSize();
+                    _toast(
+                        'device size = $size');
                   },
                 ),
               ],
