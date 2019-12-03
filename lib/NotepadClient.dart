@@ -35,6 +35,8 @@ abstract class NotepadClient {
 
   Tuple2<String, String> get fileOutputControlResponseCharacteristic;
 
+  Tuple2<String, String> get fileOutputCharacteristic;
+
   List<Tuple2<String, String>> get inputIndicationCharacteristics;
 
   List<Tuple2<String, String>> get inputNotificationCharacteristics;
