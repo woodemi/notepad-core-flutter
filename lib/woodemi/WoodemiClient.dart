@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:convert/convert.dart';
 import 'package:flutter/foundation.dart';
@@ -177,6 +178,11 @@ class WoodemiClient extends NotepadClient {
         request: Uint8List.fromList([0x0B] + data),
       ),
     );
+  }
+
+  @override
+  Future<Size> getDeviceSize() {
+    return Future.value(DeviceSize);
   }
 
   @override
