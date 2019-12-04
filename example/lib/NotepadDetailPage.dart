@@ -230,15 +230,25 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
                     print('importMemo $memoData');
                   },
                 ),
+                RaisedButton(
+                  child: Text('deleteMemo'),
+                  onPressed: () {
+                    _notepadClient.deleteMemo();
+                  },
+                ),
               ],
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
                 RaisedButton(
-                  child: Text('deleteMemo'),
-                  onPressed: () {
-                    _notepadClient.deleteMemo();
+                  child: Text('importMemo all'),
+                  onPressed: () async {
+                    var memoSummary = await _notepadClient.getMemoSummary();
+                    for (var i = 0; i < memoSummary.memoCount; i++) {
+                      await _notepadClient.importMemo((progress) => print('progress $progress'));
+                      await _notepadClient.deleteMemo();
+                    }
                   },
                 ),
               ],
