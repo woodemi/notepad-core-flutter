@@ -480,8 +480,9 @@ class WoodemiClient extends NotepadClient {
 
   @override
   Future<void> deleteMemo() async {
-    // TODO Deal with 0x01 as notification instead of response
     await notepadType.sendRequestAsync('FileInputControl', fileInputControlRequestCharacteristic, Uint8List.fromList([0x06, 0x00, 0x00, 0x00]));
+    // FIXME Deal with 0x01 as notification instead of response
+    await Future.delayed(Duration(milliseconds: 200));
   }
   //#endregion
 
