@@ -94,11 +94,14 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
                 val service = call.argument<String>("service")!!
                 val characteristic = call.argument<String>("characteristic")!!
                 val value = call.argument<ByteArray>("value")!!
-                connectGatt?.getCharacteristic(service to characteristic)?.let {
+                val writeResult = connectGatt?.getCharacteristic(service to characteristic)?.let {
                     it.value = value
                     connectGatt?.writeCharacteristic(it)
                 }
-                result.success(null)
+                if (writeResult == true)
+                    result.success(null)
+                else
+                    result.error("Characteristic unavailable", null, null)
             }
             else -> result.notImplemented()
         }
