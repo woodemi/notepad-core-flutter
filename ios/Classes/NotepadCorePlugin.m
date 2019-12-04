@@ -146,6 +146,7 @@ NSString *GSS_SUFFIX = @"0000-1000-8000-00805F9B34FB";
 
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(nullable NSError *)error {
     NSLog(@"centralManager:didDisconnectPeripheral: %@ error: %@", peripheral.identifier, error);
+    _peripheral = nil;
     [_messageChannel sendMessage:@{@"ConnectionState": @"Disconnected"}];
 }
 

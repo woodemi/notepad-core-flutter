@@ -155,6 +155,8 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
             if (newState == BluetoothGatt.STATE_CONNECTED && status == BluetoothGatt.GATT_SUCCESS) {
                 mainThreadHandler.post { messageChannel.send(mapOf("ConnectionState" to "Connected")) }
             } else {
+                connectGatt?.close()
+                connectGatt = null
                 mainThreadHandler.post { messageChannel.send(mapOf("ConnectionState" to "Disconnected")) }
             }
         }
