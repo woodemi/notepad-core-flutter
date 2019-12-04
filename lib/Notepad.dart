@@ -93,6 +93,10 @@ class NotePenPointer {
     't': t,
     'p': p,
   };
+
+  @override
+  bool operator ==(other) =>
+      x == other.x && y == other.y && t == other.t && p == other.p;
 }
 
 class MemoSummary {
