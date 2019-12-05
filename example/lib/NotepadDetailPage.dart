@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:notepad_core/notepad_core.dart';
+import 'package:notepad_core/woodemi/WoodemiClient.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tf_toast/Toast.dart';
 import 'package:tuple/tuple.dart';
@@ -200,6 +201,7 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
                 ),
               ],
             ),
+            Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
@@ -251,8 +253,18 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
                     }
                   },
                 ),
+                RaisedButton(
+                  child: Text('importImageData'),
+                  onPressed: () async {
+                    if (_notepadClient is! WoodemiClient) return;
+                    var memoData = await (_notepadClient as WoodemiClient)
+                        .importImageData((progress) => print('progress $progress'));
+                    print('importImageData $memoData');
+                  },
+                ),
               ],
             ),
+            Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
