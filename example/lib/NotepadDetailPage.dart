@@ -229,7 +229,10 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
                   onPressed: () async {
                     var memoData = await _notepadClient
                         .importMemo((progress) => print('progress $progress'));
-                    print('importMemo $memoData');
+                    print('importMemo finish');
+                    memoData.pointers.forEach((p) async {
+                      print('memoData x = ${p.x}\ty = ${p.y}\tt = ${p.t}\tp = ${p.p}');
+                    });
                   },
                 ),
                 RaisedButton(
