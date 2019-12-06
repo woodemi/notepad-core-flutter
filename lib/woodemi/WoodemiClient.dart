@@ -392,9 +392,9 @@ class WoodemiClient extends NotepadClient {
       } else {
         pointers.add(NotePenPointer(
           byteData.getUint16(0, Endian.little),
-          byteData.getUint16(0, Endian.little),
+          byteData.getUint16(2, Endian.little),
           start,
-          byteData.getUint16(0, Endian.little),
+          byteData.getUint16(4, Endian.little),
         ));
         start += SAMPLE_INTERVAL_MS;
       }
