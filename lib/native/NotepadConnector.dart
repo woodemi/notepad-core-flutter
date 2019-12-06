@@ -63,7 +63,11 @@ class NotepadConnector {
 
   Future<dynamic> _handleMessage(dynamic message) async {
     print('$tag handleMessage $message');
-    if (message['ConnectionState'] != null) {
+    if (message['ScanState'] != null) {
+      if (message['ScanState'] == 'ScanFailed') {
+        // TODO
+      }
+    } else if (message['ConnectionState'] != null) {
       if (message['ConnectionState'] == 'Connected')
         method.invokeMethod('discoverServices').then((_) =>
             print('discoverServices invokeMethod success'));

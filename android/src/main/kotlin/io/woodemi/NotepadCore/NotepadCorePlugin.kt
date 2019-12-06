@@ -113,6 +113,7 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
     private val scanCallback = object : ScanCallback() {
         override fun onScanFailed(errorCode: Int) {
             Log.v(TAG, "onScanFailed: $errorCode")
+            messageChannel.send(mapOf("ScanState" to "ScanFailed"))
         }
 
         override fun onScanResult(callbackType: Int, result: ScanResult) {
