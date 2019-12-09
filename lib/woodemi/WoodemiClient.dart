@@ -155,6 +155,9 @@ class WoodemiClient extends NotepadClient {
 
   //#region Device Info
   @override
+  Tuple2<int, int> getDeviceSize() => Tuple2(14800, 21000);
+
+  @override
   Future<String> getDeviceName() async {
     final command = WoodemiCommand(
       request: Uint8List.fromList([0x08, 0x04]),
@@ -355,23 +358,30 @@ class WoodemiClient extends NotepadClient {
     ])
   );
 
+  @override
+  Future<MemoData> importMemo(void progress(int)) async {
+    Tuple2<MemoInfo, Uint8List> tuple = await importImageData(progress);
+    return MemoData(tuple.item1, parseMemo(tuple.item2, tuple.item1.createdAt));
+  }
+
   /// Memo is kind of LargeData, transferred in data structure [ImageTransmission]
   /// +------------------------------------------------------------+
   /// |                          LargeData                         |
   /// +------------------------+----------+------------------------+
   /// | [ImageTransmission]    |   ...    |  [ImageTransmission]   |
   /// +------------------------+----------+------------------------+
-  @override
-  Future<MemoData> importMemo(void progress(int)) async {
+  @visibleForTesting
+  Future<Tuple2<MemoInfo, Uint8List>> importImageData(void progress(int)) async {
     var info = await getLargeDataInfo();
     if (info.sizeInByte <= ImageTransmission.EMPTY_LENGTH) throw Exception('No memo');
-
+    
     // TODO LargeData with multiple [ImageTransmission]
     var imageTransmission = await _requestTransmission(info.sizeInByte, progress);
-    return MemoData(info, _parseMemo(imageTransmission.imageData, info.createdAt));
+    return Tuple2(info, imageTransmission.imageData);
   }
 
-  List<NotePenPointer> _parseMemo(Uint8List bytes, int createdAt) {
+  @visibleForTesting
+  List<NotePenPointer> parseMemo(Uint8List bytes, int createdAt) {
     var byteParts = partition(bytes, 6);
     var start = createdAt;
     var pointers = List<NotePenPointer>();
@@ -382,9 +392,9 @@ class WoodemiClient extends NotepadClient {
       } else {
         pointers.add(NotePenPointer(
           byteData.getUint16(0, Endian.little),
-          byteData.getUint16(0, Endian.little),
+          byteData.getUint16(2, Endian.little),
           start,
-          byteData.getUint16(0, Endian.little),
+          byteData.getUint16(4, Endian.little),
         ));
         start += SAMPLE_INTERVAL_MS;
       }
@@ -477,8 +487,9 @@ class WoodemiClient extends NotepadClient {
 
   @override
   Future<void> deleteMemo() async {
-    // TODO Deal with 0x01 as notification instead of response
     await notepadType.sendRequestAsync('FileInputControl', fileInputControlRequestCharacteristic, Uint8List.fromList([0x06, 0x00, 0x00, 0x00]));
+    // FIXME Deal with 0x01 as notification instead of response
+    await Future.delayed(Duration(milliseconds: 200));
   }
   //#endregion
 

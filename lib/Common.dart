@@ -35,10 +35,10 @@ List<NotePenPointer> parseSyncPointer(Uint8List value) {
   var byteData = value.buffer.asByteData();
   return List.generate(value.length ~/ 6, (index) {
     return NotePenPointer(
-        byteData.getUint16(index, Endian.little),
-        byteData.getUint16(index + 2, Endian.little),
+        byteData.getUint16(index * 6, Endian.little),
+        byteData.getUint16(index * 6 + 2, Endian.little),
         -1,
-        byteData.getUint16(index + 4, Endian.little),
+        byteData.getUint16(index * 6 + 4, Endian.little),
     );
   });
 }

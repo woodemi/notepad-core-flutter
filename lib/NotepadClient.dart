@@ -67,6 +67,8 @@ abstract class NotepadClient {
   //#endregion
 
   //#region device info
+  Tuple2<int, int> getDeviceSize();
+
   Future<String> getDeviceName();
 
   Future<void> setDeviceName(String name);

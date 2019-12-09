@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:notepad_core/notepad_core.dart';
+import 'package:notepad_core/woodemi/WoodemiClient.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tf_toast/Toast.dart';
+import 'package:tuple/tuple.dart';
 
 class NotepadDetailPage extends StatefulWidget {
   final NotepadScanResult scanResult;
@@ -166,6 +168,19 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
                 RaisedButton(
+                  child: Text('getDeviceSize'),
+                  onPressed: () async {
+                    Tuple2<int, int> size = _notepadClient.getDeviceSize();
+                    _toast(
+                        'device size = $size');
+                  },
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                RaisedButton(
                   child: Text('getBatteryInfo'),
                   onPressed: () async {
                     BatteryInfo battery = await _notepadClient.getBatteryInfo();
@@ -186,6 +201,7 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
                 ),
               ],
             ),
+            Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
@@ -213,14 +229,12 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
                   onPressed: () async {
                     var memoData = await _notepadClient
                         .importMemo((progress) => print('progress $progress'));
-                    print('importMemo $memoData');
+                    print('importMemo finish');
+                    memoData.pointers.forEach((p) async {
+                      print('memoData x = ${p.x}\ty = ${p.y}\tt = ${p.t}\tp = ${p.p}');
+                    });
                   },
                 ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
                 RaisedButton(
                   child: Text('deleteMemo'),
                   onPressed: () {
@@ -229,6 +243,31 @@ class _NotepadDetailPageState extends State<NotepadDetailPage>
                 ),
               ],
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                RaisedButton(
+                  child: Text('importMemo all'),
+                  onPressed: () async {
+                    var memoSummary = await _notepadClient.getMemoSummary();
+                    for (var i = 0; i < memoSummary.memoCount; i++) {
+                      await _notepadClient.importMemo((progress) => print('progress $progress'));
+                      await _notepadClient.deleteMemo();
+                    }
+                  },
+                ),
+                RaisedButton(
+                  child: Text('importImageData'),
+                  onPressed: () async {
+                    if (_notepadClient is! WoodemiClient) return;
+                    var memoData = await (_notepadClient as WoodemiClient)
+                        .importImageData((progress) => print('progress $progress'));
+                    print('importImageData $memoData');
+                  },
+                ),
+              ],
+            ),
+            Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
