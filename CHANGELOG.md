@@ -1,3 +1,14 @@
+## 0.5.2
+
+- Upgrade to `kotlin-1.3.40`
+- Optimize data structure
+
+### NotepadClient
+- Add `getDeviceSize`
+- Fix `parseSyncData`
+- Fix `parseMemo`
+- Delay `deleteMemo` to fix `importMemo`
+
 ## 0.5.1
 
 ### NotepadClient
