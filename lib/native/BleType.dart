@@ -77,13 +77,18 @@ class BleType {
     }).then((_) => print('readValue invokeMethod success'));
   }
 
-  void writeValue(Tuple2<String, String> serviceCharacteristic, Uint8List value, BleOutputProperty bleOutputProperty) {
+  Future<void> writeValue(Tuple2<String, String> serviceCharacteristic, Uint8List value, BleOutputProperty bleOutputProperty) async {
     method.invokeMethod('writeValue', {
       'service': serviceCharacteristic.item1,
       'characteristic': serviceCharacteristic.item2,
       'value': value,
       'bleOutputProperty': bleOutputProperty.value,
-    }).then((_) => print('writeValue invokeMethod success'));
+    }).then((_) {
+      print('writeValue invokeMethod success');
+    }).catchError((onError) {
+      // Characteristic sometimes unavailable on Android
+      throw onError;
+    });
   }
 
   // FIXME Close

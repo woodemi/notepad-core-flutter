@@ -566,7 +566,12 @@ class WoodemiClient extends NotepadClient {
       final c = iterator.current;
       print('sendChunks ${c.index}, ${c.rangeStart}, ${c.rangeEnd}, ${c.bytes.length}');
       var chunkData = Uint8List.fromList([0x05, c.index] + c.bytes);
-      notepadType.sendRequestAsync('FileOutput', fileOutputCharacteristic, chunkData, BleOutputProperty.withoutResponse);
+      try {
+        await notepadType.sendRequestAsync('FileOutput', fileOutputCharacteristic, chunkData, BleOutputProperty.withoutResponse);
+      } on Exception catch (e) {
+        print('sendRequestAsync error: $e');
+        return;
+      }
       offSetListener(c.rangeEnd);
       if (iterator.moveNext()) {
         await Future.delayed(Duration(milliseconds: DEVICE_PROCESSING_INTERVAL));

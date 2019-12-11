@@ -1,3 +1,9 @@
+## 0.5.3
+
+- Confirm writeValue
+- Stop `upgrade` when `sendRequestAsync` error
+- Fix：handle `_connectionChangeHandler` after `disconnect `
+
 ## 0.5.2
 
 - Upgrade to `kotlin-1.3.40`

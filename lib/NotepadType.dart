@@ -39,8 +39,8 @@ class NotepadType {
     _bleType.requestConnectionPriority(bleConnectionPriority);
   }
 
-  void sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request, [BleOutputProperty bleOutputProperty]) async {
-    _bleType.writeValue(serviceCharacteristic, request, bleOutputProperty ?? BleOutputProperty.withResponse);
+  Future<void> sendRequestAsync(String messageHead, Tuple2<String, String> serviceCharacteristic, Uint8List request, [BleOutputProperty bleOutputProperty]) async {
+    await _bleType.writeValue(serviceCharacteristic, request, bleOutputProperty ?? BleOutputProperty.withResponse);
     print('on${messageHead}Send: ${hex.encode(request)}');
   }
 
