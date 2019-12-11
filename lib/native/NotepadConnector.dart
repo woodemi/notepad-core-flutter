@@ -51,8 +51,10 @@ class NotepadConnector {
   void disconnect() {
     _notepadClient = null;
     _notepadType = null;
-    method.invokeMethod('disconnect')
-        .then((_) => print('disconnect invokeMethod success'));
+    method.invokeMethod('disconnect').then((_) {
+      print('disconnect invokeMethod success');
+      _connectionChangeHandler(_notepadClient, 'Disconnected');
+    });
   }
 
   ConnectionChangeHandler _connectionChangeHandler;
