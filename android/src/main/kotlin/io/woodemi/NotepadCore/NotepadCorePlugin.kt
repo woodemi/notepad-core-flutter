@@ -39,11 +39,11 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
         Log.d(TAG, "onMethodCall " + call.method)
         when (call.method) {
             "startScan" -> {
-                scanner.startScan(scanCallback)
+                bluetoothManager.adapter.bluetoothLeScanner?.startScan(scanCallback)
                 result.success(null)
             }
             "stopScan" -> {
-                scanner.stopScan(scanCallback)
+                bluetoothManager.adapter.bluetoothLeScanner?.stopScan(scanCallback)
                 result.success(null)
             }
             "connect" -> {
@@ -110,8 +110,6 @@ class NotepadCorePlugin(registrar: Registrar) : MethodCallHandler, EventChannel.
     private val mainThreadHandler = Handler(Looper.getMainLooper())
 
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-
-    private val scanner = bluetoothManager.adapter.bluetoothLeScanner
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanFailed(errorCode: Int) {
