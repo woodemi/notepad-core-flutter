@@ -12,6 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '1.9.1+hotfix.6'
       - run: cd example; flutter build apk
 
   build-ios:
@@ -23,4 +25,6 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '1.9.1+hotfix.6'
       - run: cd example && flutter build ios --no-codesign
