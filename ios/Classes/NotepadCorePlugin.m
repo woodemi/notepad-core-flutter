@@ -25,8 +25,20 @@ NSString *GSS_SUFFIX = @"0000-1000-8000-00805F9B34FB";
 }
 
 - (void)setNotifiable:(NSString *)bleInputProperty forCharacteristic:(NSString *)characteristic ofService:(NSString *)service {
-    [self setNotifyValue:![bleInputProperty isEqualToString:@"disabled"]
-       forCharacteristic:[self getCharacteristic:characteristic ofService:service]];
+    CBCharacteristic *c = [self getCharacteristic:characteristic ofService:service];
+    NSString *format = [NSString stringWithFormat:@"bleInputProperty = %@;characteristic = %@;service = %@", bleInputProperty, characteristic, service];
+    if (c == Nil) {
+        [NSException raise:@"c == Nil" format:@"%@", format];
+    }else if (c == NULL) {
+        [NSException raise:@"c == NULL" format:@"%@", format];
+    }else if (c == nil) {
+        [NSException raise:@"c == nil" format:@"%@", format];
+    }else if ([c isEqual:[NSNull null]]) {
+        [NSException raise:@"c == NSNull" format:@"%@", format];
+    }else {
+        [self setNotifyValue:![bleInputProperty isEqualToString:@"disabled"]
+           forCharacteristic:c];
+    }
 }
 @end
 
@@ -189,7 +201,9 @@ NSString *GSS_SUFFIX = @"0000-1000-8000-00805F9B34FB";
     for (CBCharacteristic *characteristic in service.characteristics) {
         NSLog(@"peripheral:didDiscoverCharacteristicsForService (%@, %@)", service.UUID.UUIDString, characteristic.UUID.UUIDString);
     }
-    dispatch_group_leave(_serviceConfigGroup);
+    if (_serviceConfigGroup != nil) {
+        dispatch_group_leave(_serviceConfigGroup);
+    }
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(nullable NSError *)error {
