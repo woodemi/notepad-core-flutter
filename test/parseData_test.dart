@@ -21,8 +21,8 @@ void main() {
   test('parseMemo', () {
     var bytesStr = '48130000ffffd520021c3600d5201a1cdf00d5201a1cfa01de200f1cff01e420031cff01ec20f51bff011421c61bff012421b61bff013421a81bff0144219c1bff015421911bff016421881bff017321881bff018521881bff019821881bff01ad21881bff01c621931bff01e121a01bff01ff21b21bff011e22c71bff014022e31bff016422051cff018a22291cff01b3224f1cff01dc22721cff010523931cff012b23af1cff01e123991cff01';
     var bytes = Uint8List.fromList(hex.decode(bytesStr));
-    var createTime = 4936; //  48130000ffff
-    var pointers = woodemiClient.parseMemo(bytes, createTime);
+    var createTime = 4936 + SAMPLE_INTERVAL_MS; //  48130000ffff
+    var pointers = woodemiClient.parseMemo(bytes, createTime).toList();
     expect(bytesStr.length / 12 - 1, pointers.length);
     expect(pointers, [
       NotePenPointer(8405, 7170, createTime + SAMPLE_INTERVAL_MS * 0, 54),
